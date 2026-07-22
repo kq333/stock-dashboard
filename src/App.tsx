@@ -6,10 +6,6 @@ import Sidebar from './components/Sidebar'
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const NewsPage = lazy(() => import('./pages/NewsPage'))
 
-function PageLoader() {
-  return <div className="flex min-h-96 items-center justify-center">Loading...</div>
-}
-
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
@@ -26,7 +22,7 @@ function App() {
             isCollapsed ? 'pl-18' : 'pl-64'
           }`}
         >
-          <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={null}>
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
