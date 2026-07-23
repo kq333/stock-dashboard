@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, LayoutDashboard, Moon, Rss, Sun } from 'lucide-react'
+import { ChartCandlestick, ChevronLeft, ChevronRight, Moon, Rss, Sun } from 'lucide-react'
+import { useHideOnScroll } from '@/hooks/useHideOnScroll'
 
 type SidebarProps = {
   isCollapsed: boolean
@@ -8,6 +9,7 @@ type SidebarProps = {
 }
 
 const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
+  const isHiddenOnScroll = useHideOnScroll()
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem('theme')
 
@@ -25,13 +27,13 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar p-4 text-sidebar-foreground transition-[width,background-color,border-color] duration-300 ${
-        isCollapsed ? 'w-18' : 'w-64'
-      }`}
+      className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar p-4 text-sidebar-foreground transition-[width,translate,background-color,border-color] duration-300 ${
+        isCollapsed ? 'w-18' : 'w-18 lg:w-64'
+      } ${isHiddenOnScroll ? 'max-lg:-translate-x-full' : 'translate-x-0'}`}
     >
       <button
         type="button"
-        className="absolute top-4 -right-3 z-10 flex size-7 cursor-pointer items-center justify-center rounded-full border border-sidebar-border bg-sidebar shadow-sm transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
+        className="absolute top-4 -right-3 z-10 hidden size-7 cursor-pointer items-center justify-center rounded-full border border-sidebar-border bg-sidebar shadow-sm transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none lg:flex"
         onClick={onToggle}
         aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
@@ -43,7 +45,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       </button>
 
       <div
-        className={`mb-6 overflow-hidden whitespace-nowrap text-xl font-semibold transition-opacity duration-200 text-center ${
+        className={`mb-6 overflow-hidden whitespace-nowrap text-center text-xl font-semibold transition-opacity duration-200 max-lg:invisible max-lg:opacity-0 ${
           isCollapsed ? 'invisible opacity-0' : 'visible opacity-100'
         }`}
       >
@@ -52,7 +54,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
 
       <nav className="flex flex-col gap-2" aria-label="Main navigation">
         <NavLink
-          to="/dashboard"
+          to="/markets"
           className={({ isActive }) =>
             `rounded-md px-3 py-2 font-medium transition-[background-color] ${
               isActive
@@ -62,13 +64,13 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
           }
         >
           <div className="flex min-w-0 items-center gap-2">
-            <LayoutDashboard className="size-5 shrink-0" />
+            <ChartCandlestick className="size-5 shrink-0" />
             <span
-              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ${
+              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 max-lg:max-w-0 max-lg:opacity-0 ${
                 isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
               }`}
             >
-              Dashboard
+              Markets
             </span>
           </div>
         </NavLink>
@@ -86,7 +88,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
           <div className="flex min-w-0 items-center gap-2">
             <Rss className="size-5 shrink-0" />
             <span
-              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ${
+              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 max-lg:max-w-0 max-lg:opacity-0 ${
                 isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
               }`}
             >
@@ -104,7 +106,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       >
         {isDark ? <Sun className="size-5 shrink-0" /> : <Moon className="size-5 shrink-0" />}
         <span
-          className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ${
+          className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 max-lg:max-w-0 max-lg:opacity-0 ${
             isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
           }`}
         >
