@@ -23,7 +23,12 @@ const NewsCard: React.FC<Props> = ({
 }) => {
   return (
     <div className="mx-auto mb-4 flex h-full w-full min-w-0 max-w-md  flex-col overflow-hidden rounded-md border bg-card transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md">
-      <img className="aspect-video w-full max-w-full object-fit" src={image} alt={headline} loading="lazy" />
+      <img
+        className="aspect-video w-full max-w-full object-fit"
+        src={image}
+        alt={headline}
+        loading="lazy"
+      />
 
       <div className="flex flex-1 flex-col p-4">
         <div className="flex gap-2 items-center mt-2 mb-4 text-sm text-gray-600">
