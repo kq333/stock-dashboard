@@ -20,8 +20,8 @@ const NewsPage = () => {
       ) : (
         <section>
           <article className="mx-auto grid w-full max-w-375 grid-cols-[repeat(auto-fit,minmax(min(100%,450px),1fr))] gap-4 px-2 pt-32 pb-8 md:px-12">
-            {news.map((article) => (
-              <NewsCard key={article.id} {...article} />
+            {news.map((article, index) => (
+              <NewsCard key={article.id} {...article} isPriority={index === 0} />
             ))}
           </article>
         </section>
