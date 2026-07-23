@@ -10,6 +10,7 @@ interface Props {
   source: string
   summary: string
   url: string
+  isPriority?: boolean
 }
 
 const NewsCard: React.FC<Props> = ({
@@ -20,14 +21,16 @@ const NewsCard: React.FC<Props> = ({
   source,
   summary,
   url,
+  isPriority = false,
 }) => {
   return (
     <div className="mx-auto mb-4 flex h-full w-full min-w-0 max-w-md  flex-col overflow-hidden rounded-md border bg-card transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md">
       <img
-        className="aspect-video w-full max-w-full object-fit"
+        className="aspect-video w-full max-w-full object-cover"
         src={image}
         alt={headline}
-        loading="lazy"
+        loading={isPriority ? 'eager' : 'lazy'}
+        fetchPriority={isPriority ? 'high' : 'auto'}
       />
 
       <div className="flex flex-1 flex-col p-4">
