@@ -3,7 +3,7 @@ const PLACEHOLDERS = Array.from({ length: 9 })
 const NewsLoader = () => {
   return (
     <section aria-busy="true" aria-live="polite">
-      <div className="mx-auto grid w-full max-w-375 grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-4  ">
+      <div className="mx-auto grid w-full max-w-375 grid-cols-[repeat(auto-fit,minmax(min(100%,450px),1fr))] gap-4">
         {PLACEHOLDERS.map((_, index) => (
           <div
             key={index}
