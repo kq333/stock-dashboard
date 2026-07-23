@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 
 const FINNHUB_NEWS_URL = 'https://finnhub.io/api/v1/news'
 
-export type NewsCategory = 'general' | 'forex' | 'crypto' | 'merger'
+export type NewsCategory = 'general' |  'crypto' | 'merger'
 
 export type NewsArticle = {
   category: string
