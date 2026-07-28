@@ -38,6 +38,23 @@ export type StockMarketRow = StockCompany & {
   quote: StockQuote | null
 }
 
+export type StockMarketStatus = {
+  exchange: string
+  holiday: string | null
+  isOpen: boolean
+  session: 'pre-market' | 'regular' | 'post-market' | null
+  t: number
+  timezone: string
+}
+
+export const DASHBOARD_STOCKS: StockCompany[] = [
+  { symbol: 'SPY', name: 'S&P 500 ETF', sector: 'Market index' },
+  { symbol: 'QQQ', name: 'Nasdaq 100 ETF', sector: 'Market index' },
+  { symbol: 'DIA', name: 'Dow Jones ETF', sector: 'Market index' },
+  { symbol: 'AAPL', name: 'Apple', sector: 'Information Technology' },
+  { symbol: 'NVDA', name: 'Nvidia', sector: 'Information Technology' },
+]
+
 export const SP500_LEADERS: StockCompany[] = [
   ['AAPL', 'Apple', 'Information Technology'],
   ['MSFT', 'Microsoft', 'Information Technology'],
@@ -125,6 +142,9 @@ export const fetchStockQuote = (symbol: string, signal?: AbortSignal) =>
 export const fetchStockProfile = (symbol: string, signal?: AbortSignal) =>
   fetchFinnhub<StockProfile>('/stock/profile2', { symbol }, signal)
 
+export const fetchStockMarketStatus = (signal?: AbortSignal) =>
+  fetchFinnhub<StockMarketStatus>('/stock/market-status', { exchange: 'US' }, signal)
+
 export const fetchStockMarket = async (signal?: AbortSignal): Promise<StockMarketRow[]> => {
   const results = await Promise.allSettled(
     SP500_LEADERS.map(({ symbol }) => fetchStockQuote(symbol, signal)),
@@ -145,6 +165,40 @@ export const fetchStockDetails = async (symbol: string, signal?: AbortSignal) =>
   return { profile, quote }
 }
 
+export const fetchDashboardStocks = async (signal?: AbortSignal) => {
+  const [quoteResults, marketStatus] = await Promise.all([
+    Promise.allSettled(DASHBOARD_STOCKS.map(({ symbol }) => fetchStockQuote(symbol, signal))),
+    fetchStockMarketStatus(signal).catch(() => null),
+  ])
+
+  return {
+    marketStatus,
+    stocks: DASHBOARD_STOCKS.map((company, index) => ({
+      ...company,
+      quote: quoteResults[index].status === 'fulfilled' ? quoteResults[index].value : null,
+    })),
+  }
+}
+
+export const fetchWatchlistStocks = async (
+  symbols: string[],
+  signal?: AbortSignal,
+): Promise<StockMarketRow[]> => {
+  const companies = symbols
+    .map((symbol) =>
+      [...DASHBOARD_STOCKS, ...SP500_LEADERS].find((company) => company.symbol === symbol),
+    )
+    .filter((company): company is StockCompany => Boolean(company))
+  const quoteResults = await Promise.allSettled(
+    companies.map(({ symbol }) => fetchStockQuote(symbol, signal)),
+  )
+
+  return companies.map((company, index) => ({
+    ...company,
+    quote: quoteResults[index].status === 'fulfilled' ? quoteResults[index].value : null,
+  }))
+}
+
 export const stockMarketQueryOptions = () =>
   queryOptions({
     queryKey: ['stock-market', 'sp500-leaders'],
@@ -163,6 +217,30 @@ export const stockDetailsQueryOptions = (symbol: string) =>
     retry: 1,
   })
 
+export const dashboardStocksQueryOptions = () =>
+  queryOptions({
+    queryKey: ['dashboard-stocks'],
+    queryFn: ({ signal }) => fetchDashboardStocks(signal),
+    refetchInterval: 5 * 60_000,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  })
+
+export const watchlistStocksQueryOptions = (symbols: string[]) =>
+  queryOptions({
+    queryKey: ['watchlist-stocks', [...symbols].sort()],
+    queryFn: ({ signal }) => fetchWatchlistStocks(symbols, signal),
+    enabled: symbols.length > 0,
+    refetchInterval: 5 * 60_000,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  })
+
 export const useStockMarketQuery = () => useQuery(stockMarketQueryOptions())
 
 export const useStockDetailsQuery = (symbol: string) => useQuery(stockDetailsQueryOptions(symbol))
+
+export const useDashboardStocksQuery = () => useQuery(dashboardStocksQueryOptions())
+
+export const useWatchlistStocksQuery = (symbols: string[]) =>
+  useQuery(watchlistStocksQueryOptions(symbols))
