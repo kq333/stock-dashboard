@@ -40,6 +40,25 @@ export type CoinDetails = {
   }
 }
 
+export type CryptoGlobalData = {
+  data: {
+    active_cryptocurrencies: number
+    market_cap_change_percentage_24h_usd: number
+    market_cap_percentage: {
+      btc?: number
+      eth?: number
+    }
+    markets: number
+    total_market_cap: {
+      usd?: number
+    }
+    total_volume: {
+      usd?: number
+    }
+    updated_at: number
+  }
+}
+
 const getHeaders = (): HeadersInit => {
   const apiKey = import.meta.env.VITE_COINGECKO_API_KEY
 
@@ -89,6 +108,16 @@ export const coinDetailsQueryOptions = (coinId: string) =>
     retry: 1,
   })
 
+export const cryptoGlobalQueryOptions = () =>
+  queryOptions({
+    queryKey: ['crypto-global'],
+    queryFn: ({ signal }) => fetchCoinGecko<CryptoGlobalData>('/global', signal),
+    staleTime: 10 * 60_000,
+    retry: 1,
+  })
+
 export const useCoinMarketsQuery = () => useQuery(coinMarketsQueryOptions())
 
 export const useCoinDetailsQuery = (coinId: string) => useQuery(coinDetailsQueryOptions(coinId))
+
+export const useCryptoGlobalQuery = () => useQuery(cryptoGlobalQueryOptions())
