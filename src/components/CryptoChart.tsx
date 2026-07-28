@@ -9,7 +9,9 @@ import {
 import { useBinanceKlines } from '@/hooks/useBinanceKlines'
 
 type CryptoChartProps = {
+  height?: number
   symbol: string
+  title?: string
 }
 
 const getChartColors = () => {
@@ -22,7 +24,11 @@ const getChartColors = () => {
   }
 }
 
-const CryptoChart = ({ symbol }: CryptoChartProps) => {
+const CryptoChart = ({
+  height = 480,
+  symbol,
+  title = 'Live candlestick chart',
+}: CryptoChartProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
@@ -36,7 +42,7 @@ const CryptoChart = ({ symbol }: CryptoChartProps) => {
     const colors = getChartColors()
     const chart = createChart(container, {
       width: container.clientWidth,
-      height: 480,
+      height,
       layout: {
         background: { type: ColorType.Solid, color: colors.background },
         textColor: colors.text,
@@ -96,7 +102,7 @@ const CryptoChart = ({ symbol }: CryptoChartProps) => {
       seriesRef.current = null
       hasFittedContentRef.current = false
     }
-  }, [])
+  }, [height])
 
   useEffect(() => {
     if (!seriesRef.current || candles.length === 0) return
@@ -112,7 +118,7 @@ const CryptoChart = ({ symbol }: CryptoChartProps) => {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold">Live candlestick chart</h2>
+        <h2 className="text-xl font-semibold">{title}</h2>
         <span className="flex items-center gap-2 text-sm text-muted-foreground">
           <span
             className={`size-2 rounded-full ${
@@ -127,7 +133,7 @@ const CryptoChart = ({ symbol }: CryptoChartProps) => {
         </span>
       </div>
 
-      <div className="relative min-h-120">
+      <div className="relative" style={{ minHeight: height }}>
         <div ref={containerRef} className="w-full overflow-hidden rounded-md" />
         {candles.length === 0 && !error && (
           <div className="absolute inset-0 grid place-items-center text-muted-foreground">
