@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
-import { ChartCandlestick, ChevronLeft, ChevronRight, Moon, Rss, Sun } from 'lucide-react'
+import { Link, NavLink } from 'react-router-dom'
+import {
+  ChartCandlestick,
+  ChevronLeft,
+  ChevronRight,
+  LayoutDashboard,
+  Moon,
+  Rss,
+  Star,
+  Sun,
+} from 'lucide-react'
 import { useHideOnScroll } from '@/hooks/useHideOnScroll'
 
 type SidebarProps = {
@@ -44,15 +53,60 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
         )}
       </button>
 
-      <div
+      <Link
+        to="/dashboard"
         className={`mb-6 overflow-hidden whitespace-nowrap text-center text-xl font-semibold transition-opacity duration-200 max-lg:invisible max-lg:opacity-0 ${
           isCollapsed ? 'invisible opacity-0' : 'visible opacity-100'
         }`}
       >
         Stock Dashboard
-      </div>
+      </Link>
 
       <nav className="flex flex-col gap-2" aria-label="Main navigation">
+        <NavLink
+          to="/dashboard"
+          className={({ isActive }) =>
+            `rounded-md px-3 py-2 font-medium transition-[background-color] ${
+              isActive
+                ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent'
+            }`
+          }
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <LayoutDashboard className="size-5 shrink-0" />
+            <span
+              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 max-lg:max-w-0 max-lg:opacity-0 ${
+                isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
+              }`}
+            >
+              Dashboard
+            </span>
+          </div>
+        </NavLink>
+
+        <NavLink
+          to="/watchlist"
+          className={({ isActive }) =>
+            `rounded-md px-3 py-2 font-medium transition-[background-color] ${
+              isActive
+                ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent'
+            }`
+          }
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <Star className="size-5 shrink-0" />
+            <span
+              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 max-lg:max-w-0 max-lg:opacity-0 ${
+                isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
+              }`}
+            >
+              Watchlist
+            </span>
+          </div>
+        </NavLink>
+
         <NavLink
           to="/markets"
           className={({ isActive }) =>
