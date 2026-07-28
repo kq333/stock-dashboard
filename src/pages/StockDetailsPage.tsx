@@ -1,6 +1,8 @@
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import WatchlistButton from '@/components/WatchlistButton'
 import { useFinnhubStockPrices } from '@/hooks/useFinnhubStockPrices'
+import { useWatchlist } from '@/hooks/useWatchlist'
 import { useStockDetailsQuery } from '@/services/stockService'
 
 const formatCurrency = (value?: number | null) =>
@@ -25,6 +27,7 @@ const StockDetailsPage = () => {
   const normalizedSymbol = symbol.toUpperCase()
   const { data, error, isPending } = useStockDetailsQuery(normalizedSymbol)
   const { prices } = useFinnhubStockPrices([normalizedSymbol])
+  const { isInWatchlist, toggleAsset } = useWatchlist()
   const livePrice = prices[normalizedSymbol]?.price
   const quote = data?.quote
   const profile = data?.profile
@@ -58,7 +61,22 @@ const StockDetailsPage = () => {
                   )}
                   <div>
                     <p className="text-sm text-muted-foreground">{normalizedSymbol}</p>
-                    <h1 className="text-3xl font-bold">{profile.name}</h1>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h1 className="text-3xl font-bold">{profile.name}</h1>
+                      <WatchlistButton
+                        assetName={profile.name}
+                        isSaved={isInWatchlist({ id: normalizedSymbol, type: 'stock' })}
+                        onToggle={() =>
+                          toggleAsset({
+                            id: normalizedSymbol,
+                            name: profile.name,
+                            symbol: normalizedSymbol,
+                            type: 'stock',
+                          })
+                        }
+                        showLabel
+                      />
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {profile.exchange} · {profile.finnhubIndustry}
                     </p>
