@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Search } from 'lucide-react'
 import { useBinanceCryptoList } from '@/hooks/useBinanceCryptoList'
 import { useBinanceLivePrices } from '@/hooks/useBinanceLivePrices'
+import { useWatchlist } from '@/hooks/useWatchlist'
 import { useCoinMarketsQuery } from '@/services/coinGeckoService'
+import WatchlistButton from '@/components/WatchlistButton'
 
 const formatPrice = (price: number | null) => {
   if (price === null) return '—'
@@ -18,7 +20,7 @@ const formatPrice = (price: number | null) => {
 const formatCompactCurrency = (value: number | null) => {
   if (value === null) return '—'
 
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat('en-US', {
     currency: 'USD',
     maximumFractionDigits: 2,
     notation: 'compact',
@@ -30,10 +32,10 @@ const CryptoTableSkeleton = () => (
   <>
     {Array.from({ length: 8 }, (_, index) => (
       <tr key={index} className="border-b border-border last:border-0">
-        <td className="px-4 py-4 md:px-6">
+        <td className="hidden px-4 py-4 sm:table-cell md:px-6">
           <div className="h-4 w-6 animate-pulse rounded bg-muted" />
         </td>
-        <td className="px-4 py-4 md:px-6">
+        <td className="px-2 py-4 sm:px-4 md:px-6">
           <div className="flex items-center gap-3">
             <div className="size-9 shrink-0 animate-pulse rounded-full bg-muted" />
             <div className="space-y-2">
@@ -42,17 +44,20 @@ const CryptoTableSkeleton = () => (
             </div>
           </div>
         </td>
-        <td className="px-4 py-4 md:px-6">
+        <td className="px-2 py-4 sm:px-4 md:px-6">
           <div className="ml-auto h-4 w-24 animate-pulse rounded bg-muted" />
         </td>
-        <td className="px-4 py-4 md:px-6">
+        <td className="px-2 py-4 sm:px-4 md:px-6">
           <div className="ml-auto h-4 w-14 animate-pulse rounded bg-muted" />
         </td>
-        <td className="px-4 py-4 md:px-6">
+        <td className="hidden px-4 py-4 lg:table-cell lg:px-6">
           <div className="ml-auto h-4 w-24 animate-pulse rounded bg-muted" />
         </td>
-        <td className="px-4 py-4 md:px-6">
+        <td className="hidden px-4 py-4 lg:table-cell lg:px-6">
           <div className="ml-auto h-4 w-20 animate-pulse rounded bg-muted" />
+        </td>
+        <td className="px-1 py-4 sm:px-4 md:px-6">
+          <div className="ml-auto size-9 animate-pulse rounded bg-muted" />
         </td>
       </tr>
     ))}
@@ -64,6 +69,7 @@ const MarketsPage = () => {
   const { cryptos, error: binanceListError } = useBinanceCryptoList()
   const { error: livePriceError, prices, status } = useBinanceLivePrices()
   const { data: coinMarkets, error: coinGeckoError, isPending } = useCoinMarketsQuery()
+  const { isInWatchlist, toggleAsset } = useWatchlist()
 
   const markets = useMemo(() => {
     const binanceSymbols = new Map(cryptos.map((crypto) => [crypto.asset, crypto.symbol]))
@@ -121,15 +127,22 @@ const MarketsPage = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-175 border-collapse">
+          <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border text-left text-sm text-muted-foreground">
-                <th className="w-16 px-4 py-3 font-medium md:px-6">#</th>
-                <th className="px-4 py-3 font-medium md:px-6">Currency</th>
-                <th className="px-4 py-3 text-right font-medium md:px-6">Live price</th>
-                <th className="px-4 py-3 text-right font-medium md:px-6">24h</th>
-                <th className="px-4 py-3 text-right font-medium md:px-6">Market cap</th>
-                <th className="px-4 py-3 text-right font-medium md:px-6">Volume</th>
+                <th className="hidden w-16 px-4 py-3 font-medium sm:table-cell md:px-6">#</th>
+                <th className="px-2 py-3 font-medium sm:px-4 md:px-6">Currency</th>
+                <th className="px-2 py-3 text-right font-medium sm:px-4 md:px-6">Live price</th>
+                <th className="px-2 py-3 text-right font-medium sm:px-4 md:px-6">24h</th>
+                <th className="hidden px-4 py-3 text-right font-medium lg:table-cell lg:px-6">
+                  Market cap
+                </th>
+                <th className="hidden px-4 py-3 text-right font-medium lg:table-cell lg:px-6">
+                  Volume
+                </th>
+                <th className="w-11 px-1 py-3 sm:w-16 sm:px-4 md:px-6">
+                  <span className="sr-only">Watchlist</span>
+                </th>
               </tr>
             </thead>
             <tbody aria-busy={isPending}>
@@ -145,13 +158,13 @@ const MarketsPage = () => {
                       key={coin.id}
                       className="border-b border-border transition-colors last:border-0 hover:bg-muted/50"
                     >
-                      <td className="px-4 py-4 text-sm text-muted-foreground md:px-6">
+                      <td className="hidden px-4 py-4 text-sm text-muted-foreground sm:table-cell md:px-6">
                         {coin.market_cap_rank ?? '—'}
                       </td>
-                      <td className="px-4 py-4 md:px-6">
+                      <td className="px-2 py-4 sm:px-4 md:px-6">
                         <Link
                           to={`/markets/${coin.id}`}
-                          className="flex items-center gap-3 font-medium hover:underline"
+                          className="flex min-w-0 items-center gap-2 font-medium hover:underline sm:gap-3"
                         >
                           <img
                             src={coin.image}
@@ -159,8 +172,10 @@ const MarketsPage = () => {
                             className="size-9 rounded-full"
                             loading="lazy"
                           />
-                          <span>
-                            <span className="block">{coin.name}</span>
+                          <span className="min-w-0">
+                            <span className="block max-w-24 truncate sm:max-w-none">
+                              {coin.name}
+                            </span>
                             <span className="block text-xs text-muted-foreground uppercase">
                               {coin.symbol}
                             </span>
@@ -168,7 +183,7 @@ const MarketsPage = () => {
                         </Link>
                       </td>
                       <td
-                        className={`px-4 py-4 text-right font-semibold tabular-nums transition-colors md:px-6 ${
+                        className={`px-2 py-4 text-right text-sm font-semibold whitespace-nowrap tabular-nums transition-colors sm:px-4 sm:text-base md:px-6 ${
                           livePrice?.direction === 'up'
                             ? 'text-green-600 dark:text-green-400'
                             : livePrice?.direction === 'down'
@@ -183,7 +198,7 @@ const MarketsPage = () => {
                         </span>
                       </td>
                       <td
-                        className={`px-4 py-4 text-right font-medium md:px-6 ${
+                        className={`px-2 py-4 text-right text-sm font-medium whitespace-nowrap sm:px-4 sm:text-base md:px-6 ${
                           (coin.price_change_percentage_24h ?? 0) >= 0
                             ? 'text-green-600 dark:text-green-400'
                             : 'text-red-600 dark:text-red-400'
@@ -193,11 +208,25 @@ const MarketsPage = () => {
                           ? '—'
                           : `${coin.price_change_percentage_24h.toFixed(2)}%`}
                       </td>
-                      <td className="px-4 py-4 text-right tabular-nums md:px-6">
+                      <td className="hidden px-4 py-4 text-right tabular-nums lg:table-cell lg:px-6">
                         {formatCompactCurrency(coin.market_cap)}
                       </td>
-                      <td className="px-4 py-4 text-right tabular-nums md:px-6">
+                      <td className="hidden px-4 py-4 text-right tabular-nums lg:table-cell lg:px-6">
                         {formatCompactCurrency(coin.total_volume)}
+                      </td>
+                      <td className="px-1 py-4 text-right sm:px-4 md:px-6">
+                        <WatchlistButton
+                          assetName={coin.name}
+                          isSaved={isInWatchlist({ id: coin.id, type: 'crypto' })}
+                          onToggle={() =>
+                            toggleAsset({
+                              id: coin.id,
+                              name: coin.name,
+                              symbol: coin.symbol.toUpperCase(),
+                              type: 'crypto',
+                            })
+                          }
+                        />
                       </td>
                     </tr>
                   )
