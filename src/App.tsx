@@ -9,6 +9,8 @@ const CryptoDetailsPage = lazy(() => import('./pages/CryptoDetailsPage'))
 const StockMarketsPage = lazy(() => import('./pages/StockMarketsPage'))
 const StockDetailsPage = lazy(() => import('./pages/StockDetailsPage'))
 const NewsPage = lazy(() => import('./pages/NewsPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const WatchlistPage = lazy(() => import('./pages/WatchlistPage'))
 
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -28,7 +30,9 @@ function App() {
         >
           <Suspense fallback={null}>
             <Routes>
-              <Route path="/" element={<Navigate to="/markets" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/watchlist" element={<WatchlistPage />} />
 
               <Route path="/markets" element={<MarketsLayout />}>
                 <Route index element={<MarketsPage />} />
@@ -36,10 +40,9 @@ function App() {
                 <Route path="stocks/:symbol" element={<StockDetailsPage />} />
                 <Route path=":currencyId" element={<CryptoDetailsPage />} />
               </Route>
-              <Route path="/dashboard" element={<Navigate to="/markets" replace />} />
               <Route path="/news" element={<NewsPage />} />
 
-              <Route path="*" element={<Navigate to="/markets" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </Suspense>
         </main>
