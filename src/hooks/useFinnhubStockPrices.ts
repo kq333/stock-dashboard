@@ -25,7 +25,7 @@ export const useFinnhubStockPrices = (symbols: string[]) => {
   useEffect(() => {
     const subscribedSymbols = symbolsKey.split(',').filter(Boolean)
     const apiKey = import.meta.env.NEWS_STOCK_API_KEY
-    if (!apiKey) return
+    if (!apiKey || subscribedSymbols.length === 0) return
 
     let socket: WebSocket | null = null
     let reconnectTimeout: ReturnType<typeof setTimeout> | undefined
