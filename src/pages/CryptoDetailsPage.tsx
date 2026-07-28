@@ -1,7 +1,9 @@
 import { ArrowLeft, ArrowDown, ArrowUp } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import CryptoChart from '@/components/CryptoChart'
+import WatchlistButton from '@/components/WatchlistButton'
 import { useBinanceLivePrices } from '@/hooks/useBinanceLivePrices'
+import { useWatchlist } from '@/hooks/useWatchlist'
 import { useCoinDetailsQuery } from '@/services/coinGeckoService'
 
 const formatCurrency = (value?: number | null, compact = false) => {
@@ -36,6 +38,7 @@ const CryptoDetailsPage = () => {
   const { currencyId = '' } = useParams()
   const { data: coin, error, isPending } = useCoinDetailsQuery(currencyId)
   const { prices } = useBinanceLivePrices()
+  const { isInWatchlist, toggleAsset } = useWatchlist()
   const binanceSymbol = coin ? `${coin.symbol.toUpperCase()}USDT` : ''
   const livePrice = prices[binanceSymbol]
   const currentPrice = livePrice?.price ?? coin?.market_data.current_price.usd
@@ -82,6 +85,19 @@ const CryptoDetailsPage = () => {
                   <span className="rounded bg-muted px-2 py-1 text-sm font-medium text-muted-foreground uppercase">
                     {coin.symbol}
                   </span>
+                  <WatchlistButton
+                    assetName={coin.name}
+                    isSaved={isInWatchlist({ id: coin.id, type: 'crypto' })}
+                    onToggle={() =>
+                      toggleAsset({
+                        id: coin.id,
+                        name: coin.name,
+                        symbol: coin.symbol.toUpperCase(),
+                        type: 'crypto',
+                      })
+                    }
+                    showLabel
+                  />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Market rank #{coin.market_cap_rank ?? '—'}
