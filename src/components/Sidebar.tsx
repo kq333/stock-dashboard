@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import {
+  BriefcaseBusiness,
   ChartCandlestick,
   ChevronLeft,
   ChevronRight,
+  GitCompareArrows,
   LayoutDashboard,
   Moon,
   Rss,
@@ -103,6 +105,50 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
               }`}
             >
               Watchlist
+            </span>
+          </div>
+        </NavLink>
+
+        <NavLink
+          to="/portfolio"
+          className={({ isActive }) =>
+            `rounded-md px-3 py-2 font-medium transition-[background-color] ${
+              isActive
+                ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent'
+            }`
+          }
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <BriefcaseBusiness className="size-5 shrink-0" />
+            <span
+              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 max-lg:max-w-0 max-lg:opacity-0 ${
+                isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
+              }`}
+            >
+              Portfolio
+            </span>
+          </div>
+        </NavLink>
+
+        <NavLink
+          to="/compare"
+          className={({ isActive }) =>
+            `rounded-md px-3 py-2 font-medium transition-[background-color] ${
+              isActive
+                ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent'
+            }`
+          }
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <GitCompareArrows className="size-5 shrink-0" />
+            <span
+              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 max-lg:max-w-0 max-lg:opacity-0 ${
+                isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
+              }`}
+            >
+              Compare
             </span>
           </div>
         </NavLink>
