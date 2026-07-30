@@ -11,6 +11,8 @@ const StockDetailsPage = lazy(() => import('./pages/StockDetailsPage'))
 const NewsPage = lazy(() => import('./pages/NewsPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const WatchlistPage = lazy(() => import('./pages/WatchlistPage'))
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage'))
+const ComparePage = lazy(() => import('./pages/ComparePage'))
 
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -33,6 +35,8 @@ function App() {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/watchlist" element={<WatchlistPage />} />
+              <Route path="/portfolio" element={<PortfolioPage />} />
+              <Route path="/compare" element={<ComparePage />} />
 
               <Route path="/markets" element={<MarketsLayout />}>
                 <Route index element={<MarketsPage />} />
