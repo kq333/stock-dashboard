@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import {
   BriefcaseBusiness,
+  CalendarDays,
   ChartCandlestick,
   ChevronLeft,
   ChevronRight,
@@ -9,10 +9,12 @@ import {
   LayoutDashboard,
   Moon,
   Rss,
+  Settings,
   Star,
   Sun,
 } from 'lucide-react'
 import { useHideOnScroll } from '@/hooks/useHideOnScroll'
+import { useTheme } from '@/hooks/useTheme'
 
 type SidebarProps = {
   isCollapsed: boolean
@@ -21,20 +23,7 @@ type SidebarProps = {
 
 const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
   const isHiddenOnScroll = useHideOnScroll()
-  const [isDark, setIsDark] = useState(() => {
-    const savedTheme = localStorage.getItem('theme')
-
-    if (savedTheme) {
-      return savedTheme === 'dark'
-    }
-
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark)
-    localStorage.setItem('theme', isDark ? 'dark' : 'light')
-  }, [isDark])
+  const { isDark, toggleTheme } = useTheme()
 
   return (
     <aside
@@ -64,7 +53,10 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
         Stock Dashboard
       </Link>
 
-      <nav className="flex flex-col gap-2" aria-label="Main navigation">
+      <nav
+        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto"
+        aria-label="Main navigation"
+      >
         <NavLink
           to="/dashboard"
           className={({ isActive }) =>
@@ -154,6 +146,28 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
         </NavLink>
 
         <NavLink
+          to="/calendar"
+          className={({ isActive }) =>
+            `rounded-md px-3 py-2 font-medium transition-[background-color] ${
+              isActive
+                ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent'
+            }`
+          }
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <CalendarDays className="size-5 shrink-0" />
+            <span
+              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 max-lg:max-w-0 max-lg:opacity-0 ${
+                isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
+              }`}
+            >
+              Calendar
+            </span>
+          </div>
+        </NavLink>
+
+        <NavLink
           to="/markets"
           className={({ isActive }) =>
             `rounded-md px-3 py-2 font-medium transition-[background-color] ${
@@ -196,12 +210,34 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
             </span>
           </div>
         </NavLink>
+
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `rounded-md px-3 py-2 font-medium transition-[background-color] ${
+              isActive
+                ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent'
+            }`
+          }
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <Settings className="size-5 shrink-0" />
+            <span
+              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 max-lg:max-w-0 max-lg:opacity-0 ${
+                isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
+              }`}
+            >
+              Settings
+            </span>
+          </div>
+        </NavLink>
       </nav>
 
       <button
         type="button"
-        onClick={() => setIsDark((dark) => !dark)}
-        className="mt-auto flex min-w-0 items-center gap-2 rounded-md border border-sidebar-border px-3 py-2 font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
+        onClick={toggleTheme}
+        className="mt-4 flex min-w-0 items-center gap-2 rounded-md border border-sidebar-border px-3 py-2 font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
         aria-label={isDark ? 'Enable light mode' : 'Enable dark mode'}
       >
         {isDark ? <Sun className="size-5 shrink-0" /> : <Moon className="size-5 shrink-0" />}
