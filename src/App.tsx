@@ -13,6 +13,25 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const WatchlistPage = lazy(() => import('./pages/WatchlistPage'))
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'))
 const ComparePage = lazy(() => import('./pages/ComparePage'))
+const CalendarPage = lazy(() => import('./pages/CalendarPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+
+const DEFAULT_ROUTES = new Set([
+  '/dashboard',
+  '/markets',
+  '/watchlist',
+  '/portfolio',
+  '/compare',
+  '/calendar',
+  '/news',
+])
+
+const DefaultRouteRedirect = () => {
+  const savedRoute = localStorage.getItem('stock-dashboard-default-route')
+  const destination = savedRoute && DEFAULT_ROUTES.has(savedRoute) ? savedRoute : '/dashboard'
+
+  return <Navigate to={destination} replace />
+}
 
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -32,11 +51,13 @@ function App() {
         >
           <Suspense fallback={null}>
             <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/" element={<DefaultRouteRedirect />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/watchlist" element={<WatchlistPage />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/compare" element={<ComparePage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
 
               <Route path="/markets" element={<MarketsLayout />}>
                 <Route index element={<MarketsPage />} />
