@@ -50,7 +50,7 @@ Open the local URL printed by Vite in the terminal.
 
 ### Vercel
 
-The Vite frontend is served as static files. `api/finnhub/[...path].js` exports the shared Node.js server from `backend/app.mjs` as a Vercel Function for Finnhub REST and WebSocket requests. The function does not start its own listener or read `.env.local`.
+The Vite frontend is served as static files. `api/finnhub.js` exports the shared Node.js server from `backend/app.mjs` as a Vercel Function for Finnhub REST and WebSocket requests. An explicit rewrite in `vercel.json` routes `/api/finnhub/:path*` to this function, including nested paths such as `/api/finnhub/stock/profile2`. The function does not start its own listener or read `.env.local`.
 
 1. Import the GitHub repository into Vercel and select the **Hobby** plan for this personal portfolio project.
 2. Set the Root Directory to the directory containing `package.json` and `vercel.json`. Leave it at the repository root if those files are already there.
