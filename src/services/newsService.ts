@@ -1,8 +1,8 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
-const FINNHUB_NEWS_URL = 'https://finnhub.io/api/v1/news'
+const FINNHUB_NEWS_URL = '/api/finnhub/news'
 
-export type NewsCategory = 'general' |  'crypto' | 'merger'
+export type NewsCategory = 'general' | 'crypto' | 'merger'
 
 export type NewsArticle = {
   category: string
@@ -16,25 +16,13 @@ export type NewsArticle = {
   url: string
 }
 
-const getApiKey = () => {
-  const apiKey = import.meta.env.NEWS_STOCK_API_KEY
-
-  if (!apiKey || apiKey === 'replace_with_your_api_key') {
-    throw new Error('NEWS_STOCK_API_KEY is not configured in .env.local')
-  }
-
-  return apiKey
-}
-
 export const fetchNews = async (
   category: NewsCategory = 'general',
   signal?: AbortSignal,
 ): Promise<NewsArticle[]> => {
-  const url = new URL(FINNHUB_NEWS_URL)
-  url.searchParams.set('category', category)
-  url.searchParams.set('token', getApiKey())
+  const query = new URLSearchParams({ category })
 
-  const response = await fetch(url, { signal })
+  const response = await fetch(`${FINNHUB_NEWS_URL}?${query}`, { signal })
 
   if (!response.ok) {
     throw new Error(`Finnhub news request failed with status ${response.status}`)
