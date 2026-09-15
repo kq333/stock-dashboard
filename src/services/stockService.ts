@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
-const FINNHUB_API_URL = 'https://finnhub.io/api/v1'
+const FINNHUB_API_URL = '/api/finnhub'
 
 export type StockCompany = {
   symbol: string
@@ -108,26 +108,14 @@ export const SP500_LEADERS: StockCompany[] = [
   ['SPGI', 'S&P Global', 'Financials'],
 ].map(([symbol, name, sector]) => ({ symbol, name, sector }))
 
-const getApiKey = () => {
-  const apiKey = import.meta.env.NEWS_STOCK_API_KEY
-
-  if (!apiKey || apiKey === 'replace_with_your_finnhub_api_key') {
-    throw new Error('NEWS_STOCK_API_KEY is not configured in .env.local.')
-  }
-
-  return apiKey
-}
-
 const fetchFinnhub = async <Data>(
   path: string,
   params: Record<string, string>,
   signal?: AbortSignal,
 ): Promise<Data> => {
-  const url = new URL(`${FINNHUB_API_URL}${path}`)
-  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value))
-  url.searchParams.set('token', getApiKey())
+  const query = new URLSearchParams(params)
 
-  const response = await fetch(url, { signal })
+  const response = await fetch(`${FINNHUB_API_URL}${path}?${query}`, { signal })
 
   if (!response.ok) {
     throw new Error(`Finnhub stock request failed with status ${response.status}.`)
