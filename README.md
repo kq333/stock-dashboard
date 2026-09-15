@@ -48,6 +48,25 @@ Open the local URL printed by Vite in the terminal.
 
 ## Production
 
+### Vercel
+
+The Vite frontend is served as static files. `api/finnhub/[...path].js` exports the shared Node.js server from `backend/app.mjs` as a Vercel Function for Finnhub REST and WebSocket requests. The function does not start its own listener or read `.env.local`.
+
+1. Import the GitHub repository into Vercel and select the **Hobby** plan for this personal portfolio project.
+2. Set the Root Directory to the directory containing `package.json` and `vercel.json`. Leave it at the repository root if those files are already there.
+3. Use the **Vite** framework preset and **Node.js 22.x**. `vercel.json` configures `npm run build` and the `dist` output directory. Do not configure `npm start` on Vercel.
+4. Add `NEWS_STOCK_API_KEY` in the project's Environment Variables for **Production** and, if needed, **Preview**. Do not upload `.env.local`. The optional `VITE_COINGECKO_API_KEY` is client-visible.
+5. Set the production branch to **main** in the project's Git settings. Pushes and merges to this branch trigger production builds and deployments through the GitHub integration.
+6. Deploy, then check `/api/finnhub/status`, stock quotes, and live prices. Also refresh a nested application page to verify SPA routing.
+
+Redeploy after changing environment variables. The frontend and API use the same domain, including preview deployment domains.
+
+Vercel's [WebSocket support](https://vercel.com/docs/functions/websockets) is currently in beta. The function is configured with a 300-second maximum duration; connections close at the platform's duration limit. The stock price hook reconnects and resubscribes automatically. Verify this behavior on the deployed application, because local Node.js tests do not reproduce Vercel's runtime or routing.
+
+See [Vite on Vercel](https://vercel.com/docs/frameworks/frontend/vite) and [Git deployments](https://vercel.com/docs/git).
+
+### Standalone Node.js server
+
 ```bash
 npm run build
 npm start
@@ -75,6 +94,7 @@ Visit `/api/finnhub/status` on the running application. It returns `{ "configure
 ## Code checks
 
 ```bash
+node --test tests/backend.test.mjs
 npm run lint
 npm run format:check
 npm run build
