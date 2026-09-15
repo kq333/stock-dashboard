@@ -24,15 +24,15 @@ export const useFinnhubStockPrices = (symbols: string[]) => {
 
   useEffect(() => {
     const subscribedSymbols = symbolsKey.split(',').filter(Boolean)
-    const apiKey = import.meta.env.NEWS_STOCK_API_KEY
-    if (!apiKey || subscribedSymbols.length === 0) return
+    if (subscribedSymbols.length === 0) return
 
     let socket: WebSocket | null = null
     let reconnectTimeout: ReturnType<typeof setTimeout> | undefined
     let isActive = true
 
     const connect = () => {
-      socket = new WebSocket(`wss://ws.finnhub.io?token=${apiKey}`)
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      socket = new WebSocket(`${protocol}//${window.location.host}/api/finnhub/ws`)
 
       socket.onopen = () => {
         if (!isActive) return
