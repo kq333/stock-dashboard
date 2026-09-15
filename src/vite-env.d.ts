@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly NEWS_STOCK_API_KEY: string
+  readonly VITE_COINGECKO_API_KEY?: string
 }
 
 interface ImportMeta {
