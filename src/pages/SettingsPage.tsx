@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Database, KeyRound, Monitor, Moon, RotateCcw, Settings, Sun } from 'lucide-react'
 import { useTheme, type ThemePreference } from '@/hooks/useTheme'
 
@@ -51,14 +51,25 @@ const savedDataOptions = [
 const SettingsPage = () => {
   const { setTheme, theme } = useTheme()
   const [defaultRoute, setDefaultRoute] = useState(getDefaultRoute)
-  const finnhubConfigured = Boolean(
-    import.meta.env.NEWS_STOCK_API_KEY &&
-    import.meta.env.NEWS_STOCK_API_KEY !== 'replace_with_your_finnhub_api_key',
-  )
+  const [finnhubConfigured, setFinnhubConfigured] = useState<boolean | null>(null)
   const coinGeckoConfigured = Boolean(
     import.meta.env.VITE_COINGECKO_API_KEY &&
     import.meta.env.VITE_COINGECKO_API_KEY !== 'replace_with_your_coingecko_demo_api_key',
   )
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    fetch('/api/finnhub/status', { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : Promise.reject()))
+      .then((status: { configured?: boolean }) => setFinnhubConfigured(status.configured === true))
+      .catch((requestError: unknown) => {
+        if (requestError instanceof DOMException && requestError.name === 'AbortError') return
+        setFinnhubConfigured(false)
+      })
+
+    return () => controller.abort()
+  }, [])
 
   const updateDefaultRoute = (route: string) => {
     setDefaultRoute(route)
@@ -160,7 +171,7 @@ const SettingsPage = () => {
             {[
               {
                 configured: finnhubConfigured,
-                description: 'Stocks, news, earnings and IPOs',
+                description: 'Protected server proxy for stocks, news and calendars',
                 label: 'Finnhub',
               },
               {
@@ -179,17 +190,29 @@ const SettingsPage = () => {
                 </div>
                 <span
                   className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium ${
-                    configured
+                    configured === true
                       ? 'bg-green-500/10 text-green-700 dark:text-green-300'
-                      : 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-300'
+                      : configured === false
+                        ? 'bg-red-500/10 text-red-700 dark:text-red-300'
+                        : 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-300'
                   }`}
                 >
                   <span
                     className={`size-2 rounded-full ${
-                      configured ? 'bg-green-500' : 'bg-yellow-500'
+                      configured === true
+                        ? 'bg-green-500'
+                        : configured === false
+                          ? 'bg-red-500'
+                          : 'bg-yellow-500'
                     }`}
                   />
-                  {configured ? 'Configured' : 'Optional'}
+                  {configured === null
+                    ? 'Checking'
+                    : configured
+                      ? 'Configured'
+                      : label === 'Finnhub'
+                        ? 'Missing'
+                        : 'Optional'}
                 </span>
               </div>
             ))}
