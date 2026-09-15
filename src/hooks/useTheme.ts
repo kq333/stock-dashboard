@@ -46,7 +46,8 @@ export const useTheme = () => {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', resolvedTheme === 'dark')
-    document.documentElement.style.colorScheme = resolvedTheme
+    // Opt out of automatic browser darkening when the app resolves to light mode.
+    document.documentElement.style.colorScheme = resolvedTheme === 'light' ? 'only light' : 'dark'
   }, [resolvedTheme])
 
   const setTheme = useCallback((nextTheme: ThemePreference) => {
