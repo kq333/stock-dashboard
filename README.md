@@ -84,6 +84,14 @@ Deployment requires a Node.js process and WebSocket support. Static hosting alon
 
 Visit `/api/finnhub/status` on the running application. It returns `{ "configured": true }` when a non-placeholder Finnhub key is present. This checks configuration only; it does not verify the key with Finnhub. Without a configured key, Finnhub REST requests return HTTP 503 and live price connections are rejected.
 
+## SEO and browser icon
+
+`public/favicon.svg` supplies the browser tab icon. The HTML includes a default title, description, and Open Graph and Twitter metadata. `src/components/PageMetadata.tsx` updates titles and descriptions when navigating between pages; personal watchlist, portfolio, and settings pages receive `noindex, follow` after rendering.
+
+Once the production domain is known, set `VITE_SITE_URL` to its origin (for example, `https://your-project.vercel.app`) and rebuild. This enables canonical links and `og:url` without publishing localhost or preview URLs as canonical addresses. The value is public and contains no credentials.
+
+This is a client-rendered SPA: route-specific metadata requires JavaScript, and social crawlers that do not execute JavaScript see the default dashboard metadata. There is no prerendering or sitemap yet. `noindex` is an indexing hint, not access control. See [Google's JavaScript SEO guidance](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics).
+
 ## Publishing source code
 
 - Keep real keys in `.env.local` or in the hosting platform's server environment variables.
