@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
-const FINNHUB_API_URL = 'https://finnhub.io/api/v1'
+const FINNHUB_API_URL = '/api/finnhub'
 
 export type EarningsEvent = {
   date: string
@@ -38,28 +38,15 @@ export type MarketCalendar = {
   ipos: IpoEvent[]
 }
 
-const getApiKey = () => {
-  const apiKey = import.meta.env.NEWS_STOCK_API_KEY
-
-  if (!apiKey || apiKey === 'replace_with_your_finnhub_api_key') {
-    throw new Error('NEWS_STOCK_API_KEY is not configured in .env.local.')
-  }
-
-  return apiKey
-}
-
 const fetchFinnhubCalendar = async <Data>(
   path: string,
   from: string,
   to: string,
   signal?: AbortSignal,
 ): Promise<Data> => {
-  const url = new URL(`${FINNHUB_API_URL}${path}`)
-  url.searchParams.set('from', from)
-  url.searchParams.set('to', to)
-  url.searchParams.set('token', getApiKey())
+  const query = new URLSearchParams({ from, to })
 
-  const response = await fetch(url, { signal })
+  const response = await fetch(`${FINNHUB_API_URL}${path}?${query}`, { signal })
 
   if (!response.ok) {
     throw new Error(`Finnhub calendar request failed with status ${response.status}.`)
