@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import Sidebar from './components/Sidebar'
+import PageMetadata from './components/PageMetadata'
 
 const MarketsLayout = lazy(() => import('./components/MarketsLayout'))
 const MarketsPage = lazy(() => import('./pages/MarketsPage'))
@@ -38,6 +39,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <PageMetadata />
       <div className="min-h-screen">
         <Sidebar
           isCollapsed={isCollapsed}

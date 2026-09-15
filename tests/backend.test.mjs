@@ -6,7 +6,7 @@ import * as path from 'node:path'
 import { test } from 'node:test'
 import vm from 'node:vm'
 import { createDashboardServer } from '../backend/app.mjs'
-import vercelServer from '../api/finnhub/[...path].js'
+import vercelServer from '../api/finnhub.js'
 
 const start = async (t, server) => {
   server.listen(0, '127.0.0.1')
