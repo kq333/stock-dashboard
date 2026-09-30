@@ -45,7 +45,7 @@ const Change = ({ value }: ChangeProps) => {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 font-medium ${
+      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap font-medium ${
         isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
       }`}
     >
@@ -67,7 +67,7 @@ type MetricCardProps = {
 }
 
 const MetricCard = ({ isLoading, label, supportingText, value }: MetricCardProps) => (
-  <article className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
+  <article className="min-w-0 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
     <p className="text-sm font-medium text-muted-foreground">{label}</p>
     {isLoading ? (
       <div className="mt-3 h-8 w-32 animate-pulse rounded bg-muted" />
@@ -84,7 +84,7 @@ type MoverListProps = {
 }
 
 const MoverList = ({ coins, title }: MoverListProps) => (
-  <div>
+  <div className="min-w-0">
     <h3 className="mb-3 text-sm font-semibold text-muted-foreground">{title}</h3>
     <div className="space-y-1">
       {coins.map((coin) => (
@@ -217,8 +217,8 @@ const DashboardPage = () => {
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
-        <article className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm xl:col-span-2">
-          <div className="mb-4 flex items-center justify-between gap-4">
+        <article className="min-w-0 rounded-xl border border-border bg-card p-3 text-card-foreground shadow-sm sm:p-5 xl:col-span-2">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold">Live watchlist</h2>
               <p className="text-sm text-muted-foreground">Crypto, indices and selected stocks</p>
@@ -233,12 +233,12 @@ const DashboardPage = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-130 border-collapse text-sm">
+            <table className="w-full table-fixed border-collapse text-xs sm:table-auto sm:text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="pb-3 font-medium">Asset</th>
-                  <th className="pb-3 text-right font-medium">Live price</th>
-                  <th className="pb-3 text-right font-medium">24h</th>
+                  <th className="w-[40%] pb-3 pr-2 font-medium sm:w-auto">Asset</th>
+                  <th className="w-[35%] pb-3 pr-2 text-right font-medium sm:w-auto">Live price</th>
+                  <th className="w-1/4 pb-3 text-right font-medium sm:w-auto">24h</th>
                 </tr>
               </thead>
               <tbody>
@@ -248,19 +248,27 @@ const DashboardPage = () => {
 
                   return (
                     <tr key={coin.id} className="border-b border-border last:border-0">
-                      <td className="py-3">
+                      <td className="py-3 pr-2">
                         <Link
                           to={`/markets/${coin.id}`}
-                          className="flex items-center gap-2 font-medium hover:underline"
+                          className="flex min-w-0 items-center gap-1.5 font-medium hover:underline sm:gap-2"
                         >
-                          <img src={coin.image} alt="" className="size-7 rounded-full" />
-                          {coin.name}
-                          <span className="text-xs text-muted-foreground uppercase">
-                            {coin.symbol}
+                          <img
+                            src={coin.image}
+                            alt=""
+                            className="size-5 shrink-0 rounded-full sm:size-7"
+                          />
+                          <span className="min-w-0">
+                            <span className="block truncate sm:inline" title={coin.name}>
+                              {coin.name}
+                            </span>
+                            <span className="block text-xs text-muted-foreground uppercase sm:ml-2 sm:inline">
+                              {coin.symbol}
+                            </span>
                           </span>
                         </Link>
                       </td>
-                      <td className="py-3 text-right font-medium tabular-nums">
+                      <td className="py-3 pr-2 text-right font-medium tabular-nums [overflow-wrap:anywhere]">
                         {formatCurrency(livePrice?.price ?? coin.current_price)}
                       </td>
                       <td className="py-3 text-right">
@@ -275,16 +283,20 @@ const DashboardPage = () => {
 
                   return (
                     <tr key={stock.symbol} className="border-b border-border last:border-0">
-                      <td className="py-3">
+                      <td className="py-3 pr-2">
                         <Link
                           to={`/markets/stocks/${stock.symbol}`}
-                          className="font-medium hover:underline"
+                          className="block min-w-0 font-medium hover:underline"
                         >
-                          {stock.name}
-                          <span className="ml-2 text-xs text-muted-foreground">{stock.symbol}</span>
+                          <span className="block truncate sm:inline" title={stock.name}>
+                            {stock.name}
+                          </span>
+                          <span className="block text-xs text-muted-foreground sm:ml-2 sm:inline">
+                            {stock.symbol}
+                          </span>
                         </Link>
                       </td>
-                      <td className="py-3 text-right font-medium tabular-nums">
+                      <td className="py-3 pr-2 text-right font-medium tabular-nums [overflow-wrap:anywhere]">
                         {formatCurrency(livePrice?.price ?? stock.quote?.c)}
                       </td>
                       <td className="py-3 text-right">
@@ -305,7 +317,7 @@ const DashboardPage = () => {
           </div>
         </article>
 
-        <article className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
+        <article className="min-w-0 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">Crypto movers</h2>
             <span className="text-xs text-muted-foreground">24 hours</span>
@@ -326,13 +338,13 @@ const DashboardPage = () => {
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
-        <article className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm xl:col-span-2">
+        <article className="min-w-0 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm xl:col-span-2">
           <Suspense fallback={<div className="h-98 animate-pulse rounded-lg bg-muted" />}>
             <CryptoChart symbol="BTCUSDT" title="Bitcoin / USDT" height={340} />
           </Suspense>
         </article>
 
-        <article className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
+        <article className="min-w-0 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold">Latest news</h2>
