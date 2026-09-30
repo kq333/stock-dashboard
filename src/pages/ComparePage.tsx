@@ -130,9 +130,12 @@ const ComparePage = () => {
     availableChanges.length > 0
       ? availableChanges.reduce((best, asset) => (asset.change > best.change ? asset : best))
       : null
-  const errors = [coinError?.message, stockError?.message, cryptoLiveError, stockLiveError].filter(
-    Boolean,
-  )
+  const errors = [
+    coinError?.message,
+    stockError?.message ?? comparisonStocks.find((stock) => stock.quoteError)?.quoteError,
+    cryptoLiveError,
+    stockLiveError,
+  ].filter(Boolean)
 
   const addSelectedAsset = () => {
     if (!selectedAsset) {
