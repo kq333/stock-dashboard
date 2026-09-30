@@ -40,7 +40,7 @@ function App() {
   return (
     <BrowserRouter>
       <PageMetadata />
-      <div className="fixed inset-0 h-dvh overflow-hidden">
+      <div className="fixed inset-0 flex h-dvh flex-col overflow-hidden">
         <Sidebar
           isCollapsed={isCollapsed}
           onToggle={() => setIsCollapsed((collapsed) => !collapsed)}
@@ -48,7 +48,7 @@ function App() {
 
         <main
           id="page-content"
-          className={`h-full overflow-y-auto overscroll-y-none pl-0 transition-[padding] duration-300 ${
+          className={`min-h-0 flex-1 overflow-y-auto overscroll-y-none pl-0 transition-[padding] duration-300 ${
             isCollapsed ? 'lg:pl-18' : 'lg:pl-64'
           }`}
         >
