@@ -40,14 +40,15 @@ function App() {
   return (
     <BrowserRouter>
       <PageMetadata />
-      <div className="min-h-screen">
+      <div className="fixed inset-0 h-dvh overflow-hidden">
         <Sidebar
           isCollapsed={isCollapsed}
           onToggle={() => setIsCollapsed((collapsed) => !collapsed)}
         />
 
         <main
-          className={`min-h-screen pl-0 transition-[padding] duration-300 ${
+          id="page-content"
+          className={`h-full overflow-y-auto overscroll-y-none pl-0 transition-[padding] duration-300 ${
             isCollapsed ? 'lg:pl-18' : 'lg:pl-64'
           }`}
         >
