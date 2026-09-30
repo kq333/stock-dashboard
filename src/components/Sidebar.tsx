@@ -22,12 +22,12 @@ type SidebarProps = {
 }
 
 const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
-  const isHiddenOnScroll = useHideOnScroll()
+  const isHiddenOnScroll = useHideOnScroll({ showOnScrollUp: false, topOffset: 8 })
   const { isDark, toggleTheme } = useTheme()
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar p-4 text-sidebar-foreground transition-[width,translate,background-color,border-color] duration-300 ${
+      className={`fixed top-0 left-0 z-50 flex h-dvh max-h-dvh flex-col border-r border-sidebar-border bg-sidebar p-4 text-sidebar-foreground transition-[width,translate,background-color,border-color] duration-300 motion-reduce:transition-none ${
         isCollapsed ? 'w-18' : 'w-18 lg:w-64'
       } ${isHiddenOnScroll ? 'max-lg:-translate-x-full' : 'translate-x-0'}`}
     >
@@ -46,7 +46,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
 
       <Link
         to="/dashboard"
-        className={`mb-6 overflow-hidden whitespace-nowrap text-center text-xl font-semibold transition-opacity duration-200 max-lg:invisible max-lg:opacity-0 ${
+        className={`mb-6 shrink-0 overflow-hidden whitespace-nowrap text-center text-xl font-semibold transition-opacity duration-200 max-lg:invisible max-lg:opacity-0 ${
           isCollapsed ? 'invisible opacity-0' : 'visible opacity-100'
         }`}
       >
@@ -237,7 +237,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
       <button
         type="button"
         onClick={toggleTheme}
-        className="mt-4 flex min-w-0 items-center gap-2 rounded-md border border-sidebar-border px-3 py-2 font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
+        className="mt-4 flex min-w-0 shrink-0 items-center gap-2 rounded-md border border-sidebar-border px-3 py-2 font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
         aria-label={isDark ? 'Enable light mode' : 'Enable dark mode'}
       >
         {isDark ? <Sun className="size-5 shrink-0" /> : <Moon className="size-5 shrink-0" />}
