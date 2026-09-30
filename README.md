@@ -90,13 +90,13 @@ Open the URL printed by Vite. The development server proxies Finnhub REST and We
 ## Checks
 
 ```bash
-node --test tests/backend.test.mjs
+npm test
 npm run lint
 npm run format:check
 npm run build
 ```
 
-The backend tests cover API request validation, approved parameter forwarding, the server entry point, and WebSocket message handling. They do not verify the deployed hosting runtime or mobile browser behavior.
+The tests cover backend request validation and WebSocket forwarding, portfolio valuation with missing prices, stock quote failures, saved symbols outside the preset list, and disabled stock queries. They do not verify the deployed hosting runtime or mobile browser behavior.
 
 ## Deployment
 
