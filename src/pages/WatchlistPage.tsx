@@ -208,7 +208,7 @@ const WatchlistPage = () => {
 
         {watchlist.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-160 border-collapse">
+            <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-border text-left text-sm text-muted-foreground">
                   <th className="px-4 py-3 font-medium md:px-6">Asset</th>
