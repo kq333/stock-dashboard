@@ -53,6 +53,7 @@ const StockMarketsPage = () => {
     isConnected,
     prices,
   } = useFinnhubStockPrices(SP500_LEADERS.map(({ symbol }) => symbol))
+  const quoteError = stocks.find((stock) => stock.quoteError)?.quoteError
   const searchValue = search.trim().toLowerCase()
   const filteredStocks = stocks.filter(
     ({ name, symbol }) =>
@@ -177,8 +178,10 @@ const StockMarketsPage = () => {
         {!isPending && filteredStocks.length === 0 && !error && (
           <p className="p-8 text-center text-muted-foreground">No stocks match “{search}”.</p>
         )}
-        {(error || liveError) && (
-          <p className="p-6 text-sm text-destructive">{error?.message ?? liveError}</p>
+        {(error || quoteError || liveError) && (
+          <p className="p-6 text-sm text-destructive">
+            {error?.message ?? quoteError ?? liveError}
+          </p>
         )}
       </div>
     </section>

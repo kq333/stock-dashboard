@@ -42,12 +42,14 @@ const Change = ({ direction, value }: ChangeProps) => {
 
   return (
     <span
-      className={`inline-flex items-center justify-end gap-1 font-medium ${
+      className={`inline-flex items-center justify-end gap-0.5 whitespace-nowrap font-medium sm:gap-1 ${
         isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
       }`}
     >
-      {direction === 'up' && <ArrowUp className="size-3.5" aria-hidden="true" />}
-      {direction === 'down' && <ArrowDown className="size-3.5" aria-hidden="true" />}
+      {direction === 'up' && <ArrowUp className="hidden size-3.5 sm:block" aria-hidden="true" />}
+      {direction === 'down' && (
+        <ArrowDown className="hidden size-3.5 sm:block" aria-hidden="true" />
+      )}
       {formatPercent(value)}
     </span>
   )
@@ -72,7 +74,7 @@ const WatchlistPage = () => {
   const {
     data: watchlistStocks = [],
     error: stockError,
-    isPending: areStocksPending,
+    isLoading: areStocksPending,
   } = useWatchlistStocksQuery(stockSymbols)
   const {
     error: stockLiveError,
@@ -117,9 +119,12 @@ const WatchlistPage = () => {
 
   const coinById = new Map(coinMarkets.map((coin) => [coin.id, coin]))
   const stockBySymbol = new Map(watchlistStocks.map((stock) => [stock.symbol, stock]))
-  const errors = [coinError?.message, stockError?.message, cryptoLiveError, stockLiveError].filter(
-    Boolean,
-  )
+  const errors = [
+    coinError?.message,
+    stockError?.message ?? watchlistStocks.find((stock) => stock.quoteError)?.quoteError,
+    cryptoLiveError,
+    stockLiveError,
+  ].filter(Boolean)
 
   const handleAddAsset = (asset: WatchlistAsset) => {
     addAssetToWatchlist(asset)
@@ -148,7 +153,9 @@ const WatchlistPage = () => {
               areStocksConnected ? 'bg-green-500' : 'bg-yellow-500'
             }`}
           />
-          Live prices {areStocksConnected ? 'connected' : 'connecting'}
+          {stockSymbols.length === 0
+            ? 'No stock subscriptions'
+            : `Stock live prices ${areStocksConnected ? 'connected' : 'connecting'}`}
         </span>
       </div>
 
@@ -208,14 +215,18 @@ const WatchlistPage = () => {
 
         {watchlist.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full table-fixed border-collapse text-xs sm:table-auto sm:text-base">
               <thead>
                 <tr className="border-b border-border text-left text-sm text-muted-foreground">
-                  <th className="px-4 py-3 font-medium md:px-6">Asset</th>
-                  <th className="px-4 py-3 font-medium md:px-6">Type</th>
-                  <th className="px-4 py-3 text-right font-medium md:px-6">Live price</th>
-                  <th className="px-4 py-3 text-right font-medium md:px-6">24h</th>
-                  <th className="w-16 px-4 py-3 md:px-6">
+                  <th className="px-2 py-3 font-medium sm:px-4 md:px-6">Asset</th>
+                  <th className="hidden px-4 py-3 font-medium sm:table-cell md:px-6">Type</th>
+                  <th className="w-[34%] px-1 py-3 text-right font-medium sm:w-auto sm:px-4 md:px-6">
+                    Live price
+                  </th>
+                  <th className="w-[18%] px-1 py-3 text-right font-medium sm:w-auto sm:px-4 md:px-6">
+                    24h
+                  </th>
+                  <th className="w-10 px-0 py-3 sm:w-16 sm:px-4 md:px-6">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
@@ -248,38 +259,46 @@ const WatchlistPage = () => {
                       key={`${asset.type}:${asset.id}`}
                       className="border-b border-border transition-colors last:border-0 hover:bg-muted/50"
                     >
-                      <td className="px-4 py-4 md:px-6">
+                      <td className="px-2 py-4 sm:px-4 md:px-6">
                         <Link
                           to={destination}
-                          className="flex items-center gap-3 font-medium hover:underline"
+                          className="flex min-w-0 items-center gap-1 font-medium hover:underline sm:gap-3"
                         >
                           {coin?.image ? (
-                            <img src={coin.image} alt="" className="size-9 rounded-full" />
+                            <img
+                              src={coin.image}
+                              alt=""
+                              className="size-5 shrink-0 rounded-full sm:size-9"
+                            />
                           ) : (
-                            <span className="grid size-9 place-items-center rounded-full bg-muted text-xs font-bold">
+                            <span className="grid size-5 shrink-0 place-items-center sm:size-9 rounded-full bg-muted text-xs font-bold">
                               {asset.symbol.slice(0, 2)}
                             </span>
                           )}
-                          <span>
-                            <span className="block">{asset.name}</span>
-                            <span className="text-xs text-muted-foreground">{asset.symbol}</span>
+                          <span className="min-w-0">
+                            <span className="block truncate" title={asset.name}>
+                              {asset.name}
+                            </span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {asset.symbol}
+                            </span>
                           </span>
                         </Link>
                       </td>
-                      <td className="px-4 py-4 text-sm text-muted-foreground capitalize md:px-6">
+                      <td className="hidden px-4 py-4 text-sm text-muted-foreground capitalize sm:table-cell md:px-6">
                         {asset.type}
                       </td>
-                      <td className="px-4 py-4 text-right font-semibold tabular-nums md:px-6">
+                      <td className="px-1 py-4 text-right font-semibold tabular-nums [overflow-wrap:anywhere] sm:px-4 md:px-6">
                         {formatPrice(price)}
                       </td>
-                      <td className="px-4 py-4 text-right md:px-6">
+                      <td className="px-1 py-4 text-right sm:px-4 md:px-6">
                         <Change direction={direction} value={change} />
                       </td>
-                      <td className="px-4 py-4 text-right md:px-6">
+                      <td className="px-1 py-4 text-right sm:px-4 md:px-6">
                         <button
                           type="button"
                           onClick={() => removeAssetFromWatchlist(asset)}
-                          className="inline-flex size-9 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          className="inline-flex size-8 cursor-pointer sm:size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                           aria-label={`Remove ${asset.name} from watchlist`}
                         >
                           <Trash2 className="size-4" aria-hidden="true" />

@@ -36,6 +36,7 @@ export type StockProfile = {
 
 export type StockMarketRow = StockCompany & {
   quote: StockQuote | null
+  quoteError: string | null
 }
 
 export type StockMarketStatus = {
@@ -124,8 +125,13 @@ const fetchFinnhub = async <Data>(
   return response.json() as Promise<Data>
 }
 
-export const fetchStockQuote = (symbol: string, signal?: AbortSignal) =>
-  fetchFinnhub<StockQuote>('/quote', { symbol }, signal)
+export const fetchStockQuote = async (symbol: string, signal?: AbortSignal) => {
+  const quote = await fetchFinnhub<StockQuote>('/quote', { symbol }, signal)
+  if (!quote || !Number.isFinite(quote.c) || quote.c <= 0 || !Number.isFinite(quote.dp)) {
+    throw new Error(`No valid quote available for ${symbol}.`)
+  }
+  return quote
+}
 
 export const fetchStockProfile = (symbol: string, signal?: AbortSignal) =>
   fetchFinnhub<StockProfile>('/stock/profile2', { symbol }, signal)
@@ -133,16 +139,28 @@ export const fetchStockProfile = (symbol: string, signal?: AbortSignal) =>
 export const fetchStockMarketStatus = (signal?: AbortSignal) =>
   fetchFinnhub<StockMarketStatus>('/stock/market-status', { exchange: 'US' }, signal)
 
-export const fetchStockMarket = async (signal?: AbortSignal): Promise<StockMarketRow[]> => {
+const fetchCompanyQuotes = async (
+  companies: StockCompany[],
+  signal?: AbortSignal,
+): Promise<StockMarketRow[]> => {
   const results = await Promise.allSettled(
-    SP500_LEADERS.map(({ symbol }) => fetchStockQuote(symbol, signal)),
+    companies.map(({ symbol }) => fetchStockQuote(symbol, signal)),
   )
-
-  return SP500_LEADERS.map((company, index) => ({
-    ...company,
-    quote: results[index].status === 'fulfilled' ? results[index].value : null,
-  }))
+  signal?.throwIfAborted()
+  if (results.length > 0 && results.every((result) => result.status === 'rejected')) {
+    throw new Error('Stock quotes are temporarily unavailable. Please try again.')
+  }
+  return companies.map((company, index) => {
+    const result = results[index]
+    return {
+      ...company,
+      quote: result.status === 'fulfilled' ? result.value : null,
+      quoteError: result.status === 'rejected' ? `Quote unavailable for ${company.symbol}.` : null,
+    }
+  })
 }
+
+export const fetchStockMarket = (signal?: AbortSignal) => fetchCompanyQuotes(SP500_LEADERS, signal)
 
 export const fetchStockDetails = async (symbol: string, signal?: AbortSignal) => {
   const [quote, profile] = await Promise.all([
@@ -154,17 +172,14 @@ export const fetchStockDetails = async (symbol: string, signal?: AbortSignal) =>
 }
 
 export const fetchDashboardStocks = async (signal?: AbortSignal) => {
-  const [quoteResults, marketStatus] = await Promise.all([
-    Promise.allSettled(DASHBOARD_STOCKS.map(({ symbol }) => fetchStockQuote(symbol, signal))),
+  const [stocks, marketStatus] = await Promise.all([
+    fetchCompanyQuotes(DASHBOARD_STOCKS, signal),
     fetchStockMarketStatus(signal).catch(() => null),
   ])
 
   return {
     marketStatus,
-    stocks: DASHBOARD_STOCKS.map((company, index) => ({
-      ...company,
-      quote: quoteResults[index].status === 'fulfilled' ? quoteResults[index].value : null,
-    })),
+    stocks,
   }
 }
 
@@ -172,19 +187,17 @@ export const fetchWatchlistStocks = async (
   symbols: string[],
   signal?: AbortSignal,
 ): Promise<StockMarketRow[]> => {
-  const companies = symbols
-    .map((symbol) =>
-      [...DASHBOARD_STOCKS, ...SP500_LEADERS].find((company) => company.symbol === symbol),
-    )
-    .filter((company): company is StockCompany => Boolean(company))
-  const quoteResults = await Promise.allSettled(
-    companies.map(({ symbol }) => fetchStockQuote(symbol, signal)),
+  const companies = [
+    ...new Set(symbols.map((symbol) => symbol.trim().toUpperCase()).filter(Boolean)),
+  ].map(
+    (symbol) =>
+      [...DASHBOARD_STOCKS, ...SP500_LEADERS].find((company) => company.symbol === symbol) ?? {
+        symbol,
+        name: symbol,
+        sector: 'Unknown',
+      },
   )
-
-  return companies.map((company, index) => ({
-    ...company,
-    quote: quoteResults[index].status === 'fulfilled' ? quoteResults[index].value : null,
-  }))
+  return fetchCompanyQuotes(companies, signal)
 }
 
 export const stockMarketQueryOptions = () =>

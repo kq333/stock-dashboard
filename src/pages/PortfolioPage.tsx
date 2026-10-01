@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { ArrowDown, ArrowUp, BriefcaseBusiness, Plus, Trash2 } from 'lucide-react'
+import { calculatePosition, calculatePortfolioTotals } from '@/lib/portfolio'
 import { Link } from 'react-router-dom'
 import { useBinanceLivePrices } from '@/hooks/useBinanceLivePrices'
 import { useFinnhubStockPrices } from '@/hooks/useFinnhubStockPrices'
@@ -30,10 +31,12 @@ const isPortfolioHolding = (value: unknown): value is PortfolioHolding => {
 
   return (
     typeof holding.averageCost === 'number' &&
+    Number.isFinite(holding.averageCost) &&
     holding.averageCost >= 0 &&
     typeof holding.id === 'string' &&
     typeof holding.name === 'string' &&
     typeof holding.quantity === 'number' &&
+    Number.isFinite(holding.quantity) &&
     holding.quantity > 0 &&
     typeof holding.symbol === 'string' &&
     (holding.type === 'crypto' || holding.type === 'stock')
@@ -52,13 +55,15 @@ const getInitialPortfolio = () => {
   }
 }
 
-const formatCurrency = (value: number, compact = false) =>
-  new Intl.NumberFormat('en-US', {
-    currency: 'USD',
-    maximumFractionDigits: compact ? 2 : value < 1 ? 6 : 2,
-    notation: compact ? 'compact' : 'standard',
-    style: 'currency',
-  }).format(value)
+const formatCurrency = (value: number | null, compact = false) =>
+  value === null
+    ? '\u2014'
+    : new Intl.NumberFormat('en-US', {
+        currency: 'USD',
+        maximumFractionDigits: compact ? 2 : value < 1 ? 6 : 2,
+        notation: compact ? 'compact' : 'standard',
+        style: 'currency',
+      }).format(value)
 
 const formatQuantity = (value: number) =>
   new Intl.NumberFormat(undefined, { maximumFractionDigits: 8 }).format(value)
@@ -94,7 +99,7 @@ const PortfolioPage = () => {
   const {
     data: portfolioStocks = [],
     error: stockError,
-    isPending: areStocksPending,
+    isLoading: areStocksPending,
   } = useWatchlistStocksQuery(stockSymbols)
   const { error: stockLiveError, prices: stockLivePrices } = useFinnhubStockPrices(stockSymbols)
 
@@ -112,39 +117,26 @@ const PortfolioPage = () => {
       holding.type === 'crypto'
         ? cryptoLivePrices[`${holding.symbol.toUpperCase()}USDT`]?.price
         : stockLivePrices[holding.symbol]?.price
-    const currentPrice = livePrice ?? coin?.current_price ?? stock?.quote?.c ?? 0
-    const invested = holding.quantity * holding.averageCost
-    const value = holding.quantity * currentPrice
-    const profitLoss = value - invested
-    const profitLossPercentage = invested > 0 ? (profitLoss / invested) * 100 : 0
-
     return {
       ...holding,
-      currentPrice,
+      ...calculatePosition(
+        holding.quantity,
+        holding.averageCost,
+        livePrice ?? coin?.current_price ?? stock?.quote?.c,
+      ),
       image: coin?.image,
-      invested,
-      profitLoss,
-      profitLossPercentage,
-      value,
     }
   })
 
-  const totals = useMemo(
-    () =>
-      positions.reduce(
-        (result, position) => ({
-          invested: result.invested + position.invested,
-          value: result.value + position.value,
-        }),
-        { invested: 0, value: 0 },
-      ),
-    [positions],
-  )
-  const totalProfitLoss = totals.value - totals.invested
-  const totalReturn = totals.invested > 0 ? (totalProfitLoss / totals.invested) * 100 : 0
-  const errors = [coinError?.message, stockError?.message, cryptoLiveError, stockLiveError].filter(
-    Boolean,
-  )
+  const totals = calculatePortfolioTotals(positions)
+  const totalProfitLoss = totals.profitLoss
+  const totalReturn = totals.totalReturn
+  const errors = [
+    coinError?.message,
+    stockError?.message ?? portfolioStocks.find((stock) => stock.quoteError)?.quoteError,
+    cryptoLiveError,
+    stockLiveError,
+  ].filter(Boolean)
 
   const handleAddHolding = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -152,7 +144,15 @@ const PortfolioPage = () => {
     const parsedQuantity = Number(quantity)
     const parsedAverageCost = Number(averageCost)
 
-    if (!selectedAsset || parsedQuantity <= 0 || parsedAverageCost < 0) {
+    if (
+      !selectedAsset ||
+      !quantity.trim() ||
+      !averageCost.trim() ||
+      !Number.isFinite(parsedQuantity) ||
+      !Number.isFinite(parsedAverageCost) ||
+      parsedQuantity <= 0 ||
+      parsedAverageCost < 0
+    ) {
       setFormError('Select an asset and enter a valid quantity and average purchase price.')
       return
     }
@@ -247,24 +247,43 @@ const PortfolioPage = () => {
         <SummaryCard label="Total invested" value={formatCurrency(totals.invested, true)} />
         <SummaryCard
           label="Unrealized profit/loss"
-          value={`${totalProfitLoss >= 0 ? '+' : ''}${formatCurrency(totalProfitLoss, true)}`}
+          value={
+            totalProfitLoss === null
+              ? '\u2014'
+              : `${totalProfitLoss >= 0 ? '+' : ''}${formatCurrency(totalProfitLoss, true)}`
+          }
           valueClassName={
-            totalProfitLoss >= 0
-              ? 'text-green-600 dark:text-green-400'
-              : 'text-red-600 dark:text-red-400'
+            totalProfitLoss === null
+              ? 'text-muted-foreground'
+              : totalProfitLoss >= 0
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-red-600 dark:text-red-400'
           }
         />
         <SummaryCard
           label="Total return"
-          value={`${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`}
+          value={
+            totalReturn === null
+              ? '\u2014'
+              : `${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`
+          }
           valueClassName={
-            totalReturn >= 0
-              ? 'text-green-600 dark:text-green-400'
-              : 'text-red-600 dark:text-red-400'
+            totalReturn === null
+              ? 'text-muted-foreground'
+              : totalReturn >= 0
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-red-600 dark:text-red-400'
           }
         />
       </div>
 
+      {totals.missingPrices > 0 && (
+        <p role="status" className="mt-4 text-sm text-muted-foreground">
+          Prices are unavailable for {totals.missingPrices}{' '}
+          {totals.missingPrices === 1 ? 'position' : 'positions'}. Portfolio value, return and
+          allocation will appear when all prices are available.
+        </p>
+      )}
       <article className="mt-4 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
         <div className="mb-4">
           <h2 className="text-xl font-semibold">Add a position</h2>
@@ -357,8 +376,13 @@ const PortfolioPage = () => {
         {positions.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2">
             {positions.map((position) => {
-              const isPositive = position.profitLoss >= 0
-              const allocation = totals.value > 0 ? (position.value / totals.value) * 100 : 0
+              const isPositive = position.profitLoss !== null && position.profitLoss >= 0
+              const allocation =
+                totals.value === null || position.value === null
+                  ? null
+                  : totals.value > 0
+                    ? (position.value / totals.value) * 100
+                    : 0
               const destination =
                 position.type === 'crypto'
                   ? `/markets/${position.id}`
@@ -414,34 +438,41 @@ const PortfolioPage = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-muted-foreground">Profit/loss</p>
-                      <p
-                        className={`mt-1 inline-flex items-center justify-end gap-1 font-semibold ${
-                          isPositive
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
-                        }`}
-                      >
-                        {isPositive ? (
-                          <ArrowUp className="size-3.5" aria-hidden="true" />
-                        ) : (
-                          <ArrowDown className="size-3.5" aria-hidden="true" />
-                        )}
-                        {isPositive ? '+' : ''}
-                        {formatCurrency(position.profitLoss)} (
-                        {position.profitLossPercentage.toFixed(2)}%)
-                      </p>
+                      {position.profitLoss === null ? (
+                        <p className="mt-1 text-muted-foreground">Unavailable</p>
+                      ) : (
+                        <p
+                          className={`mt-1 inline-flex items-center justify-end gap-1 font-semibold ${
+                            isPositive
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-red-600 dark:text-red-400'
+                          }`}
+                        >
+                          {isPositive ? (
+                            <ArrowUp className="size-3.5" aria-hidden="true" />
+                          ) : (
+                            <ArrowDown className="size-3.5" aria-hidden="true" />
+                          )}
+                          {isPositive ? '+' : ''}
+                          {formatCurrency(position.profitLoss)} (
+                          {position.profitLossPercentage === null
+                            ? '\u2014'
+                            : position.profitLossPercentage.toFixed(2) + '%'}
+                          )
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="mt-5">
                     <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
                       <span>Portfolio allocation</span>
-                      <span>{allocation.toFixed(1)}%</span>
+                      <span>{allocation === null ? '\u2014' : `${allocation.toFixed(1)}%`}</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-muted">
                       <div
                         className="h-full rounded-full bg-primary transition-[width] duration-300"
-                        style={{ width: `${Math.min(allocation, 100)}%` }}
+                        style={{ width: `${Math.min(allocation ?? 0, 100)}%` }}
                       />
                     </div>
                   </div>

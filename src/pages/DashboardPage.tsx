@@ -144,7 +144,7 @@ const DashboardPage = () => {
   const errors = [
     coinError?.message,
     globalError?.message,
-    stockError?.message,
+    stockError?.message ?? stockDashboard?.stocks?.find((stock) => stock.quoteError)?.quoteError,
     newsError?.message,
     cryptoLiveError,
     stockLiveError,
