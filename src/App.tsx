@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import Sidebar from './components/Sidebar'
 import PageMetadata from './components/PageMetadata'
+import ScrollToTop from './components/ScrollToTop'
 
 const MarketsLayout = lazy(() => import('./components/MarketsLayout'))
 const MarketsPage = lazy(() => import('./pages/MarketsPage'))
@@ -40,6 +41,7 @@ function App() {
   return (
     <BrowserRouter>
       <PageMetadata />
+      <ScrollToTop />
       <div className="fixed inset-0 flex h-dvh flex-col overflow-hidden">
         <Sidebar
           isCollapsed={isCollapsed}
@@ -52,7 +54,13 @@ function App() {
             isCollapsed ? 'lg:pl-18' : 'lg:pl-64'
           }`}
         >
-          <Suspense fallback={null}>
+          <Suspense
+            fallback={
+              <p role="status" className="p-8 text-center text-muted-foreground">
+                Loading page...
+              </p>
+            }
+          >
             <Routes>
               <Route path="/" element={<DefaultRouteRedirect />} />
               <Route path="/dashboard" element={<DashboardPage />} />
