@@ -21,25 +21,23 @@ const TopbarNews: React.FC<Props> = ({ newsCategory, setNewsCategory }) => {
         isHiddenOnScroll ? 'max-lg:-translate-y-full' : 'translate-y-0'
       }`}
     >
-
-        <ul className="flex flex-1 items-center justify-center gap-1 text-muted-foreground uppercase md:gap-8">
-          {topbarElements.map(({ label, value }) => (
-            <li key={value}>
-              <button
-                type="button"
-                onClick={() => setNewsCategory(value)}
-                className={`cursor-pointer rounded-md px-3 py-2 text-base font-semibold transition-colors md:text-2xl ${
-                  newsCategory === value
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-accent hover:text-accent-foreground'
-                }`}
-              >
-                {label}
-              </button>
-            </li>
-          ))}
-        </ul>
-
+      <ul className="flex flex-1 items-center justify-center gap-1 text-muted-foreground uppercase md:gap-8">
+        {topbarElements.map(({ label, value }) => (
+          <li key={value}>
+            <button
+              type="button"
+              onClick={() => setNewsCategory(value)}
+              className={`cursor-pointer rounded-md px-3 py-2 text-base font-semibold transition-colors md:text-2xl ${
+                newsCategory === value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'hover:bg-accent hover:text-accent-foreground'
+              }`}
+            >
+              {label}
+            </button>
+          </li>
+        ))}
+      </ul>
     </header>
   )
 }
