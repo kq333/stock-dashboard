@@ -76,7 +76,6 @@ const MarketsPage = () => {
     const searchValue = search.trim().toLowerCase()
 
     return (coinMarkets ?? [])
-      .filter((coin) => binanceSymbols.has(coin.symbol.toUpperCase()))
       .filter(
         (coin) =>
           coin.name.toLowerCase().includes(searchValue) ||
@@ -84,7 +83,8 @@ const MarketsPage = () => {
       )
       .map((coin) => ({
         ...coin,
-        binanceSymbol: binanceSymbols.get(coin.symbol.toUpperCase())!,
+        binanceSymbol:
+          binanceSymbols.get(coin.symbol.toUpperCase()) ?? `${coin.symbol.toUpperCase()}USDT`,
       }))
   }, [coinMarkets, cryptos, search])
 
