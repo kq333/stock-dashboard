@@ -20,7 +20,11 @@ export const useFinnhubStockPrices = (symbols: string[]) => {
   const [prices, setPrices] = useState<Record<string, LiveStockPrice>>({})
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const symbolsKey = symbols.join(',')
+  const symbolsKey = [
+    ...new Set(symbols.map((symbol) => symbol.trim().toUpperCase()).filter(Boolean)),
+  ]
+    .sort()
+    .join(',')
 
   useEffect(() => {
     const subscribedSymbols = symbolsKey.split(',').filter(Boolean)
@@ -31,6 +35,7 @@ export const useFinnhubStockPrices = (symbols: string[]) => {
     let isActive = true
 
     const connect = () => {
+      if (!isActive) return
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
       socket = new WebSocket(`${protocol}//${window.location.host}/api/finnhub/ws`)
 
@@ -44,6 +49,7 @@ export const useFinnhubStockPrices = (symbols: string[]) => {
       }
 
       socket.onmessage = (event: MessageEvent<string>) => {
+        if (!isActive) return
         const message = JSON.parse(event.data) as
           FinnhubTradeMessage | { type: 'error'; msg: string }
 
@@ -74,21 +80,44 @@ export const useFinnhubStockPrices = (symbols: string[]) => {
         })
       }
 
-      socket.onerror = () => setError('Could not connect to Finnhub live prices.')
+      socket.onerror = () => {
+        if (isActive) setError('Could not connect to Finnhub live prices.')
+      }
       socket.onclose = () => {
+        if (!isActive) return
         setIsConnected(false)
-        if (isActive) reconnectTimeout = setTimeout(connect, RECONNECT_DELAY)
+        reconnectTimeout = setTimeout(connect, RECONNECT_DELAY)
       }
     }
 
-    connect()
+    // StrictMode immediately cleans up its first effect. Defer opening the
+    // socket so that this cleanup can cancel it before a handshake starts.
+    const connectTimeout = setTimeout(connect, 0)
 
     return () => {
       isActive = false
+      clearTimeout(connectTimeout)
       if (reconnectTimeout) clearTimeout(reconnectTimeout)
-      socket?.close()
+      if (socket) {
+        const retiredSocket = socket
+        retiredSocket.onmessage = null
+        retiredSocket.onerror = null
+        retiredSocket.onclose = null
+        if (retiredSocket.readyState === WebSocket.CONNECTING) {
+          // Closing a pending handshake produces a browser console error.
+          // Retire it as soon as it opens, without subscribing to any symbols.
+          retiredSocket.onopen = () => retiredSocket.close()
+        } else {
+          retiredSocket.onopen = null
+          retiredSocket.close()
+        }
+      }
     }
   }, [symbolsKey])
 
-  return { error, isConnected, prices }
+  return {
+    error: symbols.length > 0 ? error : null,
+    isConnected: symbols.length > 0 && isConnected,
+    prices,
+  }
 }
