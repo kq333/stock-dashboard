@@ -6,6 +6,8 @@ A portfolio project built with **React and TypeScript** for exploring stock and 
 
 No sign-up is required. Watchlists, portfolio positions, and preferences are saved locally in the browser.
 
+The interface is available in **English and Polish**. Change the language in **Settings → Language**; the choice persists across visits. Dates, numbers, and chart labels follow the selected locale, while valuations remain in USD and provider news stays in its original language.
+
 ## Preview
 
 **Desktop dashboard**
@@ -38,6 +40,7 @@ No sign-up is required. Watchlists, portfolio positions, and preferences are sav
 - **Browser persistence:** watchlists, portfolio holdings, comparison selections, and preferences use `localStorage`. The watchlist uses `useSyncExternalStore` to synchronize subscribing components.
 - **Route-based loading:** pages and the chart component are lazy-loaded with React `Suspense`.
 - **Responsive navigation:** a desktop sidebar and mobile topbar share navigation state; the mobile sidebar supports manual toggling and automatic hiding on scroll.
+- **Localization:** i18next and react-i18next power the EN/PL interface, interpolation, and React subscriptions. `Intl` handles locale-aware formatting, and language preferences synchronize across browser tabs.
 
 ## Stack
 
@@ -58,6 +61,7 @@ No sign-up is required. Watchlists, portfolio positions, and preferences are sav
 - [Live stock prices](src/hooks/useFinnhubStockPrices.ts) — WebSocket subscriptions and reconnection.
 - [Crypto chart](src/components/CryptoChart.tsx) — chart lifecycle, resizing, and theme integration.
 - [Watchlist state](src/hooks/useWatchlist.ts) — browser persistence and external-store subscriptions.
+- [i18next configuration](src/i18n.ts) and [translation resources](src/locales) — persisted language selection and EN/PL messages.
 - [Portfolio calculations](src/pages/PortfolioPage.tsx) — holdings, average cost, and unrealized returns.
 - [Backend proxy](backend/app.mjs) and [backend tests](tests/backend.test.mjs) — request validation, parameter filtering, and WebSocket forwarding.
 

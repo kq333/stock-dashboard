@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import { Link, matchPath, NavLink, useLocation } from 'react-router-dom'
 import {
@@ -36,28 +37,31 @@ const pageTitles: Record<string, string> = {
   '/settings': 'Settings',
 }
 
-const getPageTitle = (pathname: string) => {
+const getPageTitle = (pathname: string, t: (text: string) => string) => {
   const path = pathname.replace(/\/+$/, '') || '/'
   const title = pageTitles[path.toLowerCase()]
-  if (title) return title
+  if (title) return t(title)
 
   const stock = matchPath('/markets/stocks/:symbol', path)
-  if (stock?.params.symbol) return `${stock.params.symbol.toUpperCase()} · Stocks`
+  if (stock?.params.symbol) return `${stock.params.symbol.toUpperCase()} · ${t('Stocks')}`
 
   const crypto = matchPath('/markets/:currencyId', path)
   if (crypto?.params.currencyId) {
     const name = crypto.params.currencyId
       .replace(/-/g, ' ')
       .replace(/\b\w/g, (letter) => letter.toUpperCase())
-    return `${name} · Crypto`
+    return `${name} · ${t('Crypto')}`
   }
 
-  return 'Dashboard'
+  return t('Dashboard')
 }
 
 const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage === 'pl' ? 'pl' : 'en'
+
   const { pathname } = useLocation()
-  const pageTitle = getPageTitle(pathname)
+  const pageTitle = getPageTitle(pathname, t)
   const isHiddenOnScroll = useHideOnScroll({ showOnScrollUp: false, topOffset: 8 })
   const [isMobileOpen, setIsMobileOpen] = useState<boolean | null>(null)
   const isMobileHidden = isMobileOpen === null ? isHiddenOnScroll : !isMobileOpen
@@ -78,7 +82,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
           type="button"
           className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
           onClick={() => setIsMobileOpen(isMobileHidden)}
-          aria-label={isMobileHidden ? 'Open navigation' : 'Close navigation'}
+          aria-label={isMobileHidden ? t('Open navigation') : t('Close navigation')}
           aria-expanded={!isMobileHidden}
           aria-controls="main-sidebar"
         >
@@ -102,7 +106,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
           type="button"
           className="absolute top-4 -right-3 z-10 hidden size-7 cursor-pointer items-center justify-center rounded-full border border-sidebar-border bg-sidebar shadow-sm transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none lg:flex"
           onClick={onToggle}
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={isCollapsed ? t('Expand sidebar') : t('Collapse sidebar')}
         >
           {isCollapsed ? (
             <ChevronRight className="pointer-events-none size-4" />
@@ -122,9 +126,10 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
 
         <nav
           className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto"
-          aria-label="Main navigation"
+          aria-label={t('Main navigation')}
         >
           <NavLink
+            aria-label={t('Dashboard')}
             to="/dashboard"
             className={({ isActive }) =>
               `rounded-md px-3 py-2 font-medium transition-[background-color] ${
@@ -141,12 +146,13 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
                   isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
                 }`}
               >
-                Dashboard
+                {t('Dashboard')}
               </span>
             </div>
           </NavLink>
 
           <NavLink
+            aria-label={t('Watchlist')}
             to="/watchlist"
             className={({ isActive }) =>
               `rounded-md px-3 py-2 font-medium transition-[background-color] ${
@@ -163,12 +169,13 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
                   isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
                 }`}
               >
-                Watchlist
+                {t('Watchlist')}
               </span>
             </div>
           </NavLink>
 
           <NavLink
+            aria-label={t('Portfolio')}
             to="/portfolio"
             className={({ isActive }) =>
               `rounded-md px-3 py-2 font-medium transition-[background-color] ${
@@ -185,12 +192,13 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
                   isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
                 }`}
               >
-                Portfolio
+                {t('Portfolio')}
               </span>
             </div>
           </NavLink>
 
           <NavLink
+            aria-label={t('Compare')}
             to="/compare"
             className={({ isActive }) =>
               `rounded-md px-3 py-2 font-medium transition-[background-color] ${
@@ -207,12 +215,13 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
                   isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
                 }`}
               >
-                Compare
+                {t('Compare')}
               </span>
             </div>
           </NavLink>
 
           <NavLink
+            aria-label={t('Calendar')}
             to="/calendar"
             className={({ isActive }) =>
               `rounded-md px-3 py-2 font-medium transition-[background-color] ${
@@ -229,12 +238,13 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
                   isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
                 }`}
               >
-                Calendar
+                {t('Calendar')}
               </span>
             </div>
           </NavLink>
 
           <NavLink
+            aria-label={t('Markets')}
             to="/markets"
             className={({ isActive }) =>
               `rounded-md px-3 py-2 font-medium transition-[background-color] ${
@@ -251,12 +261,13 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
                   isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
                 }`}
               >
-                Markets
+                {t('Markets')}
               </span>
             </div>
           </NavLink>
 
           <NavLink
+            aria-label={t('News')}
             to="/news"
             className={({ isActive }) =>
               `rounded-md px-3 py-2 font-medium transition-[background-color] ${
@@ -273,12 +284,13 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
                   isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
                 }`}
               >
-                News
+                {t('News')}
               </span>
             </div>
           </NavLink>
 
           <NavLink
+            aria-label={t('Settings')}
             to="/settings"
             className={({ isActive }) =>
               `rounded-md px-3 py-2 font-medium transition-[background-color] ${
@@ -295,17 +307,41 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
                   isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
                 }`}
               >
-                Settings
+                {t('Settings')}
               </span>
             </div>
           </NavLink>
         </nav>
 
+        <div
+          role="group"
+          aria-label={t('Interface language')}
+          className={`mt-4 flex shrink-0 gap-1 rounded-md border border-sidebar-border p-1 max-lg:flex-col ${isCollapsed ? 'flex-col' : ''}`}
+        >
+          {(['en', 'pl'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              lang={option}
+              aria-label={option === 'pl' ? t('Switch to Polish') : t('Switch to English')}
+              aria-pressed={language === option}
+              onClick={() => void i18n.changeLanguage(option)}
+              className={`min-h-10 min-w-0 flex-1 cursor-pointer rounded-sm text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none ${
+                language === option
+                  ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                  : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+              }`}
+            >
+              {option.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
         <button
           type="button"
           onClick={toggleTheme}
-          className="mt-4 flex min-w-0 shrink-0 items-center gap-2 rounded-md border border-sidebar-border px-3 py-2 font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
-          aria-label={isDark ? 'Enable light mode' : 'Enable dark mode'}
+          className="mt-2 flex min-w-0 shrink-0 items-center gap-2 rounded-md border border-sidebar-border px-3 py-2 font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
+          aria-label={isDark ? t('Enable light mode') : t('Enable dark mode')}
         >
           {isDark ? <Sun className="size-5 shrink-0" /> : <Moon className="size-5 shrink-0" />}
           <span
@@ -313,7 +349,7 @@ const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
               isCollapsed ? 'max-w-0 opacity-0' : 'max-w-32 opacity-100'
             }`}
           >
-            {isDark ? 'Light mode' : 'Dark mode'}
+            {isDark ? t('Light mode') : t('Dark mode')}
           </span>
         </button>
       </aside>

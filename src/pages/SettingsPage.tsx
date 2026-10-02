@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import { Database, KeyRound, Monitor, Moon, RotateCcw, Settings, Sun } from 'lucide-react'
 import { useTheme, type ThemePreference } from '@/hooks/useTheme'
@@ -49,6 +50,9 @@ const savedDataOptions = [
 ]
 
 const SettingsPage = () => {
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage === 'pl' ? 'pl' : 'en'
+
   const { setTheme, theme } = useTheme()
   const [defaultRoute, setDefaultRoute] = useState(getDefaultRoute)
   const [finnhubConfigured, setFinnhubConfigured] = useState<boolean | null>(null)
@@ -77,9 +81,7 @@ const SettingsPage = () => {
   }
 
   const resetSavedData = (label: string, key: string, event?: string) => {
-    const shouldReset = window.confirm(
-      `${label}? This action only affects data saved in this browser.`,
-    )
+    const shouldReset = window.confirm(t('Reset confirmation', { action: t(label) }))
     if (!shouldReset) return
 
     localStorage.removeItem(key)
@@ -90,23 +92,44 @@ const SettingsPage = () => {
     <section className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-7">
         <p className="mb-1 text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-          Preferences
+          {t('Preferences')}
         </p>
         <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">
           <Settings className="size-8" aria-hidden="true" />
-          Settings
+          {t('Settings')}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Customize the dashboard and manage locally saved data.
+          {t('Customize the dashboard and manage locally saved data.')}
         </p>
       </div>
 
       <div className="space-y-4">
         <article className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm sm:p-6">
+          <h2 className="text-xl font-semibold">{t('Language')}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t('Choose the interface language. Your choice is saved in this browser.')}
+          </p>
+          <label className="mt-5 grid max-w-md gap-1.5 text-sm font-medium">
+            {t('Interface language')}
+            <select
+              value={language}
+              onChange={(event) => i18n.changeLanguage(event.target.value === 'pl' ? 'pl' : 'en')}
+              className="h-11 rounded-md border border-input bg-background px-3 font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="en" lang="en">
+                English (EN)
+              </option>
+              <option value="pl" lang="pl">
+                Polski (PL)
+              </option>
+            </select>
+          </label>
+        </article>
+        <article className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm sm:p-6">
           <div>
-            <h2 className="text-xl font-semibold">Appearance</h2>
+            <h2 className="text-xl font-semibold">{t('Appearance')}</h2>
             <p className="text-sm text-muted-foreground">
-              Choose a theme or follow your operating system preference.
+              {t('Choose a theme or follow your operating system preference.')}
             </p>
           </div>
 
@@ -122,9 +145,9 @@ const SettingsPage = () => {
               >
                 <Icon className="size-5" aria-hidden="true" />
                 <span>
-                  <span className="block font-medium">{label}</span>
+                  <span className="block font-medium">{t(label)}</span>
                   <span className="text-xs text-muted-foreground">
-                    {value === 'system' ? 'Use device setting' : `${label} colors`}
+                    {value === 'system' ? t('Use device setting') : t(`${label} colors`)}
                   </span>
                 </span>
               </button>
@@ -134,14 +157,14 @@ const SettingsPage = () => {
 
         <article className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm sm:p-6">
           <div>
-            <h2 className="text-xl font-semibold">Start page</h2>
+            <h2 className="text-xl font-semibold">{t('Start page')}</h2>
             <p className="text-sm text-muted-foreground">
-              Select where the application opens when visiting the root URL.
+              {t('Select where the application opens when visiting the root URL.')}
             </p>
           </div>
 
           <label className="mt-5 grid max-w-md gap-1.5 text-sm font-medium">
-            Default route
+            {t('Default route')}
             <select
               value={defaultRoute}
               onChange={(event) => updateDefaultRoute(event.target.value)}
@@ -149,7 +172,7 @@ const SettingsPage = () => {
             >
               {routeOptions.map(({ label, value }) => (
                 <option key={value} value={value}>
-                  {label}
+                  {t(label)}
                 </option>
               ))}
             </select>
@@ -160,9 +183,9 @@ const SettingsPage = () => {
           <div className="flex items-start gap-3">
             <KeyRound className="mt-0.5 size-5 text-muted-foreground" aria-hidden="true" />
             <div>
-              <h2 className="text-xl font-semibold">API configuration</h2>
+              <h2 className="text-xl font-semibold">{t('API configuration')}</h2>
               <p className="text-sm text-muted-foreground">
-                Configuration status only. Secret values are never displayed here.
+                {t('Configuration status only. Secret values are never displayed here.')}
               </p>
             </div>
           </div>
@@ -185,8 +208,8 @@ const SettingsPage = () => {
                 className="flex items-center justify-between gap-4 rounded-lg border border-border p-4"
               >
                 <div>
-                  <p className="font-medium">{label}</p>
-                  <p className="text-xs text-muted-foreground">{description}</p>
+                  <p className="font-medium">{t(label)}</p>
+                  <p className="text-xs text-muted-foreground">{t(description)}</p>
                 </div>
                 <span
                   className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -207,12 +230,12 @@ const SettingsPage = () => {
                     }`}
                   />
                   {configured === null
-                    ? 'Checking'
+                    ? t('Checking')
                     : configured
-                      ? 'Configured'
+                      ? t('Configured')
                       : label === 'Finnhub'
-                        ? 'Missing'
-                        : 'Optional'}
+                        ? t('Missing')
+                        : t('Optional')}
                 </span>
               </div>
             ))}
@@ -223,9 +246,9 @@ const SettingsPage = () => {
           <div className="flex items-start gap-3">
             <Database className="mt-0.5 size-5 text-muted-foreground" aria-hidden="true" />
             <div>
-              <h2 className="text-xl font-semibold">Local data</h2>
+              <h2 className="text-xl font-semibold">{t('Local data')}</h2>
               <p className="text-sm text-muted-foreground">
-                Watchlist, portfolio and comparison data are stored only in this browser.
+                {t('Watchlist, portfolio and comparison data are stored only in this browser.')}
               </p>
             </div>
           </div>
@@ -237,8 +260,8 @@ const SettingsPage = () => {
                 className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-medium">{label}</p>
-                  <p className="text-xs text-muted-foreground">{description}</p>
+                  <p className="font-medium">{t(label)}</p>
+                  <p className="text-xs text-muted-foreground">{t(description)}</p>
                 </div>
                 <button
                   type="button"
@@ -246,7 +269,7 @@ const SettingsPage = () => {
                   className="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-border px-3 text-sm font-medium transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   <RotateCcw className="size-4" aria-hidden="true" />
-                  {label}
+                  {t(label)}
                 </button>
               </div>
             ))}

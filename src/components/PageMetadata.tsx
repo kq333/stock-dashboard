@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 const pages: Record<string, { title: string; description: string; noindex?: boolean }> = {
   '/dashboard': {
@@ -60,6 +61,8 @@ const setMeta = (attribute: 'name' | 'property', key: string, content: string) =
 
 export default function PageMetadata() {
   const { pathname } = useLocation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage === 'pl' ? 'pl' : 'en'
 
   useEffect(() => {
     const path = pathname.replace(/\/+$/, '') || '/'
@@ -70,19 +73,21 @@ export default function PageMetadata() {
       const asset = (stock?.[1] ?? crypto?.[1] ?? '').replace(/-/g, ' ').slice(0, 80)
       const name = stock ? asset.toUpperCase() : asset
       page = {
-        title: `${name} ${stock ? 'Stock' : 'Crypto'} Price & Details`,
-        description: `Explore ${name} price information, charts, and ${stock ? 'company' : 'cryptocurrency'} market details on Stock Dashboard.`,
+        title: t('Asset metadata title', { name, type: stock ? 'Stock' : 'Crypto' }),
+        description: t('Asset metadata description', { name }),
       }
     }
 
-    const title = `${page.title} | Stock Dashboard`
+    document.documentElement.lang = language
+    const title = `${t(page.title)} | Stock Dashboard`
     document.title = title
-    setMeta('name', 'description', page.description)
+    setMeta('name', 'description', t(page.description))
     setMeta('name', 'robots', page.noindex ? 'noindex, follow' : 'index, follow')
     setMeta('property', 'og:title', title)
-    setMeta('property', 'og:description', page.description)
+    setMeta('property', 'og:description', t(page.description))
+    setMeta('property', 'og:locale', language === 'pl' ? 'pl_PL' : 'en_US')
     setMeta('name', 'twitter:title', title)
-    setMeta('name', 'twitter:description', page.description)
+    setMeta('name', 'twitter:description', t(page.description))
 
     // Only publish canonical URLs when the production domain has been configured.
     const siteUrl = import.meta.env.VITE_SITE_URL
@@ -103,7 +108,7 @@ export default function PageMetadata() {
         // A malformed optional site URL must not prevent the application from rendering.
       }
     }
-  }, [pathname])
+  }, [pathname, language, t])
 
   return null
 }

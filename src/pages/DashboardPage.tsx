@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { formatNumber, getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { lazy, Suspense } from 'react'
 import { ArrowDown, ArrowRight, ArrowUp, Clock3 } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -16,10 +19,10 @@ const CryptoChart = lazy(() => import('@/components/CryptoChart'))
 const CRYPTO_WATCHLIST = ['bitcoin', 'ethereum', 'solana']
 const DASHBOARD_SYMBOLS = DASHBOARD_STOCKS.map(({ symbol }) => symbol)
 
-const formatCurrency = (value?: number | null, compact = false) => {
+const formatCurrency = (locale: string, value?: number | null, compact = false) => {
   if (value === undefined || value === null) return '—'
 
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(locale, {
     currency: 'USD',
     maximumFractionDigits: compact ? 2 : value < 1 ? 6 : 2,
     notation: compact ? 'compact' : 'standard',
@@ -27,9 +30,9 @@ const formatCurrency = (value?: number | null, compact = false) => {
   }).format(value)
 }
 
-const formatPercent = (value?: number | null) => {
+const formatPercent = (locale: string, value?: number | null) => {
   if (value === undefined || value === null) return '—'
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
+  return `${value >= 0 ? '+' : ''}${formatNumber(value, 2, locale)}%`
 }
 
 type ChangeProps = {
@@ -37,6 +40,9 @@ type ChangeProps = {
 }
 
 const Change = ({ value }: ChangeProps) => {
+  const { i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   if (value === undefined || value === null) {
     return <span className="text-muted-foreground">—</span>
   }
@@ -54,7 +60,7 @@ const Change = ({ value }: ChangeProps) => {
       ) : (
         <ArrowDown className="size-3.5" aria-hidden="true" />
       )}
-      {formatPercent(value)}
+      {formatPercent(locale, value)}
     </span>
   )
 }
@@ -105,6 +111,9 @@ const MoverList = ({ coins, title }: MoverListProps) => (
 )
 
 const DashboardPage = () => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const { data: coins = [], error: coinError, isPending: areCoinsPending } = useCoinMarketsQuery()
   const {
     data: globalResponse,
@@ -155,9 +164,9 @@ const DashboardPage = () => {
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-            Market overview
+            {t('Market overview')}
           </p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t('Dashboard')}</h1>
         </div>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-2">
@@ -166,7 +175,7 @@ const DashboardPage = () => {
                 cryptoConnection === 'connected' ? 'bg-green-500' : 'bg-yellow-500'
               }`}
             />
-            Crypto live
+            {t('Crypto live')}
           </span>
           <span className="inline-flex items-center gap-2">
             <span
@@ -174,7 +183,7 @@ const DashboardPage = () => {
                 areStocksConnected ? 'bg-green-500' : 'bg-yellow-500'
               }`}
             />
-            Stocks live
+            {t('Stocks live')}
           </span>
         </div>
       </div>
@@ -182,36 +191,38 @@ const DashboardPage = () => {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           isLoading={isGlobalPending}
-          label="Total crypto market cap"
-          value={formatCurrency(globalData?.total_market_cap.usd, true)}
-          supportingText={
-            formatPercent(globalData?.market_cap_change_percentage_24h_usd) + ' today'
-          }
+          label={t('Total crypto market cap')}
+          value={formatCurrency(locale, globalData?.total_market_cap.usd, true)}
+          supportingText={t('Today change', {
+            change: formatPercent(locale, globalData?.market_cap_change_percentage_24h_usd),
+          })}
         />
         <MetricCard
           isLoading={isGlobalPending}
-          label="24h crypto volume"
-          value={formatCurrency(globalData?.total_volume.usd, true)}
-          supportingText={`${globalData?.active_cryptocurrencies?.toLocaleString() ?? '—'} active assets`}
+          label={t('24h crypto volume')}
+          value={formatCurrency(locale, globalData?.total_volume.usd, true)}
+          supportingText={t('Active assets', {
+            count: globalData?.active_cryptocurrencies?.toLocaleString(locale) ?? '—',
+          })}
         />
         <MetricCard
           isLoading={isGlobalPending}
-          label="Bitcoin dominance"
+          label={t('Bitcoin dominance')}
           value={
             globalData?.market_cap_percentage.btc === undefined
               ? '—'
-              : `${globalData.market_cap_percentage.btc.toFixed(1)}%`
+              : `${formatNumber(globalData.market_cap_percentage.btc, 1, locale)}%`
           }
-          supportingText={`ETH ${globalData?.market_cap_percentage.eth?.toFixed(1) ?? '—'}%`}
+          supportingText={`ETH ${globalData?.market_cap_percentage.eth === undefined ? '—' : formatNumber(globalData.market_cap_percentage.eth, 1, locale)}%`}
         />
         <MetricCard
           isLoading={areStocksPending}
-          label="US market"
-          value={marketStatus ? (marketStatus.isOpen ? 'Open' : 'Closed') : 'Unavailable'}
+          label={t('US market')}
+          value={marketStatus ? (marketStatus.isOpen ? t('Open') : t('Closed')) : t('Unavailable')}
           supportingText={
             marketStatus?.session
-              ? marketStatus.session.replace('-', ' ')
-              : (marketStatus?.holiday ?? 'Current exchange status')
+              ? t(marketStatus.session.replace('-', ' '))
+              : (marketStatus?.holiday ?? t('Current exchange status'))
           }
         />
       </div>
@@ -220,14 +231,16 @@ const DashboardPage = () => {
         <article className="min-w-0 rounded-xl border border-border bg-card p-3 text-card-foreground shadow-sm sm:p-5 xl:col-span-2">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold">Live watchlist</h2>
-              <p className="text-sm text-muted-foreground">Crypto, indices and selected stocks</p>
+              <h2 className="text-xl font-semibold">{t('Live watchlist')}</h2>
+              <p className="text-sm text-muted-foreground">
+                {t('Crypto, indices and selected stocks')}
+              </p>
             </div>
             <Link
               to="/markets"
               className="inline-flex items-center gap-1 text-sm font-medium hover:underline"
             >
-              All markets
+              {t('All markets')}
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </div>
@@ -236,8 +249,10 @@ const DashboardPage = () => {
             <table className="w-full table-fixed border-collapse text-xs sm:table-auto sm:text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="w-[40%] pb-3 pr-2 font-medium sm:w-auto">Asset</th>
-                  <th className="w-[35%] pb-3 pr-2 text-right font-medium sm:w-auto">Live price</th>
+                  <th className="w-[40%] pb-3 pr-2 font-medium sm:w-auto">{t('Asset')}</th>
+                  <th className="w-[35%] pb-3 pr-2 text-right font-medium sm:w-auto">
+                    {t('Live price')}
+                  </th>
                   <th className="w-1/4 pb-3 text-right font-medium sm:w-auto">24h</th>
                 </tr>
               </thead>
@@ -269,7 +284,7 @@ const DashboardPage = () => {
                         </Link>
                       </td>
                       <td className="py-3 pr-2 text-right font-medium tabular-nums [overflow-wrap:anywhere]">
-                        {formatCurrency(livePrice?.price ?? coin.current_price)}
+                        {formatCurrency(locale, livePrice?.price ?? coin.current_price)}
                       </td>
                       <td className="py-3 text-right">
                         <Change value={coin.price_change_percentage_24h} />
@@ -297,7 +312,7 @@ const DashboardPage = () => {
                         </Link>
                       </td>
                       <td className="py-3 pr-2 text-right font-medium tabular-nums [overflow-wrap:anywhere]">
-                        {formatCurrency(livePrice?.price ?? stock.quote?.c)}
+                        {formatCurrency(locale, livePrice?.price ?? stock.quote?.c)}
                       </td>
                       <td className="py-3 text-right">
                         <Change value={stock.quote?.dp} />
@@ -319,8 +334,8 @@ const DashboardPage = () => {
 
         <article className="min-w-0 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Crypto movers</h2>
-            <span className="text-xs text-muted-foreground">24 hours</span>
+            <h2 className="text-xl font-semibold">{t('Crypto movers')}</h2>
+            <span className="text-xs text-muted-foreground">{t('24 hours')}</span>
           </div>
           {areCoinsPending ? (
             <div className="space-y-3">
@@ -330,8 +345,8 @@ const DashboardPage = () => {
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1">
-              <MoverList title="Top gainers" coins={gainers} />
-              <MoverList title="Top losers" coins={losers} />
+              <MoverList title={t('Top gainers')} coins={gainers} />
+              <MoverList title={t('Top losers')} coins={losers} />
             </div>
           )}
         </article>
@@ -347,11 +362,11 @@ const DashboardPage = () => {
         <article className="min-w-0 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold">Latest news</h2>
-              <p className="text-sm text-muted-foreground">Market headlines</p>
+              <h2 className="text-xl font-semibold">{t('Latest news')}</h2>
+              <p className="text-sm text-muted-foreground">{t('Market headlines')}</p>
             </div>
             <Link to="/news" className="text-sm font-medium hover:underline">
-              View all
+              {t('View all')}
             </Link>
           </div>
 
@@ -379,7 +394,7 @@ const DashboardPage = () => {
                     <span aria-hidden="true">·</span>
                     <span className="inline-flex items-center gap-1">
                       <Clock3 className="size-3" aria-hidden="true" />
-                      {new Date(article.datetime * 1_000).toLocaleDateString()}
+                      {new Date(article.datetime * 1_000).toLocaleDateString(locale)}
                     </span>
                   </p>
                 </a>
@@ -391,7 +406,7 @@ const DashboardPage = () => {
 
       {errors.length > 0 && (
         <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          Some dashboard data is temporarily unavailable: {errors[0]}
+          {t('Some dashboard data is temporarily unavailable:')} {translateError(errors[0], t)}
         </p>
       )}
     </section>

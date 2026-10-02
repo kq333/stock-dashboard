@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { formatNumber, getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp, Plus, Search, Star, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -13,19 +16,19 @@ const stockOptions = Array.from(
   ).values(),
 )
 
-const formatPrice = (value?: number | null) => {
+const formatPrice = (locale: string, value?: number | null) => {
   if (value === undefined || value === null) return '—'
 
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(locale, {
     currency: 'USD',
     maximumFractionDigits: value < 1 ? 6 : 2,
     style: 'currency',
   }).format(value)
 }
 
-const formatPercent = (value?: number | null) => {
+const formatPercent = (locale: string, value?: number | null) => {
   if (value === undefined || value === null) return '—'
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
+  return `${value >= 0 ? '+' : ''}${formatNumber(value, 2, locale)}%`
 }
 
 type ChangeProps = {
@@ -34,6 +37,9 @@ type ChangeProps = {
 }
 
 const Change = ({ direction, value }: ChangeProps) => {
+  const { i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   if (value === undefined || value === null) {
     return <span className="text-muted-foreground">—</span>
   }
@@ -50,12 +56,15 @@ const Change = ({ direction, value }: ChangeProps) => {
       {direction === 'down' && (
         <ArrowDown className="hidden size-3.5 sm:block" aria-hidden="true" />
       )}
-      {formatPercent(value)}
+      {formatPercent(locale, value)}
     </span>
   )
 }
 
 const WatchlistPage = () => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const {
     addAsset: addAssetToWatchlist,
     removeAsset: removeAssetFromWatchlist,
@@ -136,14 +145,14 @@ const WatchlistPage = () => {
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-            Personal market
+            {t('Personal market')}
           </p>
           <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">
             <Star className="size-8 fill-current" aria-hidden="true" />
-            Watchlist
+            {t('Watchlist')}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Your saved assets are stored in this browser.
+            {t('Your saved assets are stored in this browser.')}
           </p>
         </div>
 
@@ -154,20 +163,22 @@ const WatchlistPage = () => {
             }`}
           />
           {stockSymbols.length === 0
-            ? 'No stock subscriptions'
-            : `Stock live prices ${areStocksConnected ? 'connected' : 'connecting'}`}
+            ? t('No stock subscriptions')
+            : t('Stock stream status', {
+                status: t(areStocksConnected ? 'connected' : 'connecting'),
+              })}
         </span>
       </div>
 
       <div className="relative mb-4 max-w-xl">
         <label className="relative block">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <span className="sr-only">Search assets to add</span>
+          <span className="sr-only">{t('Search assets to add')}</span>
           <input
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search crypto, company or symbol..."
+            placeholder={t('Search crypto, company or symbol...')}
             className="w-full rounded-lg border border-input bg-background py-3 pr-4 pl-10 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>
@@ -186,7 +197,7 @@ const WatchlistPage = () => {
                       <span>
                         <span className="block text-sm font-medium">{asset.name}</span>
                         <span className="text-xs text-muted-foreground">
-                          {asset.symbol} · {asset.type}
+                          {asset.symbol} · {t(asset.type)}
                         </span>
                       </span>
                       <Plus className="size-4 shrink-0" aria-hidden="true" />
@@ -196,7 +207,7 @@ const WatchlistPage = () => {
               </ul>
             ) : (
               <p className="p-4 text-sm text-muted-foreground">
-                {areCoinsPending ? 'Loading available assets...' : 'No new assets found.'}
+                {areCoinsPending ? t('Loading available assets...') : t('No new assets found.')}
               </p>
             )}
           </div>
@@ -206,9 +217,9 @@ const WatchlistPage = () => {
       <div className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm">
         <div className="flex items-center justify-between gap-4 border-b border-border p-4 md:px-6">
           <div>
-            <h2 className="text-xl font-semibold">Saved assets</h2>
+            <h2 className="text-xl font-semibold">{t('Saved assets')}</h2>
             <p className="text-sm text-muted-foreground">
-              {watchlist.length} {watchlist.length === 1 ? 'asset' : 'assets'}
+              {t('Asset count', { count: watchlist.length })}
             </p>
           </div>
         </div>
@@ -218,16 +229,18 @@ const WatchlistPage = () => {
             <table className="w-full table-fixed border-collapse text-xs sm:table-auto sm:text-base">
               <thead>
                 <tr className="border-b border-border text-left text-sm text-muted-foreground">
-                  <th className="px-2 py-3 font-medium sm:px-4 md:px-6">Asset</th>
-                  <th className="hidden px-4 py-3 font-medium sm:table-cell md:px-6">Type</th>
+                  <th className="px-2 py-3 font-medium sm:px-4 md:px-6">{t('Asset')}</th>
+                  <th className="hidden px-4 py-3 font-medium sm:table-cell md:px-6">
+                    {t('Type')}
+                  </th>
                   <th className="w-[34%] px-1 py-3 text-right font-medium sm:w-auto sm:px-4 md:px-6">
-                    Live price
+                    {t('Live price')}
                   </th>
                   <th className="w-[18%] px-1 py-3 text-right font-medium sm:w-auto sm:px-4 md:px-6">
                     24h
                   </th>
                   <th className="w-10 px-0 py-3 sm:w-16 sm:px-4 md:px-6">
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">{t('Actions')}</span>
                   </th>
                 </tr>
               </thead>
@@ -286,10 +299,10 @@ const WatchlistPage = () => {
                         </Link>
                       </td>
                       <td className="hidden px-4 py-4 text-sm text-muted-foreground capitalize sm:table-cell md:px-6">
-                        {asset.type}
+                        {t(asset.type)}
                       </td>
                       <td className="px-1 py-4 text-right font-semibold tabular-nums [overflow-wrap:anywhere] sm:px-4 md:px-6">
-                        {formatPrice(price)}
+                        {formatPrice(locale, price)}
                       </td>
                       <td className="px-1 py-4 text-right sm:px-4 md:px-6">
                         <Change direction={direction} value={change} />
@@ -299,7 +312,7 @@ const WatchlistPage = () => {
                           type="button"
                           onClick={() => removeAssetFromWatchlist(asset)}
                           className="inline-flex size-8 cursor-pointer sm:size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                          aria-label={`Remove ${asset.name} from watchlist`}
+                          aria-label={t('Remove watchlist asset', { name: asset.name })}
                         >
                           <Trash2 className="size-4" aria-hidden="true" />
                         </button>
@@ -314,9 +327,9 @@ const WatchlistPage = () => {
           <div className="grid min-h-64 place-items-center p-8 text-center">
             <div>
               <Star className="mx-auto size-10 text-muted-foreground" aria-hidden="true" />
-              <h2 className="mt-4 text-lg font-semibold">Your watchlist is empty</h2>
+              <h2 className="mt-4 text-lg font-semibold">{t('Your watchlist is empty')}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Search above to add a cryptocurrency or stock.
+                {t('Search above to add a cryptocurrency or stock.')}
               </p>
             </div>
           </div>
@@ -324,14 +337,14 @@ const WatchlistPage = () => {
 
         {(areStocksPending || areCoinsPending) && watchlist.length > 0 && (
           <p className="border-t border-border p-3 text-center text-xs text-muted-foreground">
-            Updating market data...
+            {t('Updating market data...')}
           </p>
         )}
       </div>
 
       {errors.length > 0 && (
         <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          Some watchlist data is temporarily unavailable: {errors[0]}
+          {t('Some watchlist data is temporarily unavailable:')} {translateError(errors[0], t)}
         </p>
       )}
     </section>

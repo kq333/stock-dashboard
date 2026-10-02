@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { formatNumber, getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, ArrowDown, ArrowUp } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import CryptoChart from '@/components/CryptoChart'
@@ -6,10 +9,10 @@ import { useBinanceLivePrices } from '@/hooks/useBinanceLivePrices'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useCoinDetailsQuery } from '@/services/coinGeckoService'
 
-const formatCurrency = (value?: number | null, compact = false) => {
+const formatCurrency = (locale: string, value?: number | null, compact = false) => {
   if (value === undefined || value === null) return '—'
 
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(locale, {
     currency: 'USD',
     maximumFractionDigits: compact ? 2 : value < 1 ? 8 : 2,
     notation: compact ? 'compact' : 'standard',
@@ -17,9 +20,9 @@ const formatCurrency = (value?: number | null, compact = false) => {
   }).format(value)
 }
 
-const formatNumber = (value?: number | null) => {
+const formatSupply = (locale: string, value?: number | null) => {
   if (value === undefined || value === null) return '—'
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)
 }
 
 type MetricProps = {
@@ -35,6 +38,9 @@ const Metric = ({ label, value }: MetricProps) => (
 )
 
 const CryptoDetailsPage = () => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const { currencyId = '' } = useParams()
   const { data: coin, error, isPending } = useCoinDetailsQuery(currencyId)
   const { prices } = useBinanceLivePrices()
@@ -44,7 +50,9 @@ const CryptoDetailsPage = () => {
   const currentPrice = livePrice?.price ?? coin?.market_data.current_price.usd
 
   if (isPending) {
-    return <p className="p-8 text-center text-muted-foreground">Loading currency details...</p>
+    return (
+      <p className="p-8 text-center text-muted-foreground">{t('Loading currency details...')}</p>
+    )
   }
 
   if (error || !coin) {
@@ -55,9 +63,11 @@ const CryptoDetailsPage = () => {
           className="mb-6 inline-flex items-center gap-2 text-sm font-medium hover:underline"
         >
           <ArrowLeft className="size-4" />
-          Back to market
+          {t('Back to market')}
         </Link>
-        <p className="text-destructive">{error?.message ?? 'Currency was not found.'}</p>
+        <p className="text-destructive">
+          {translateError(error?.message ?? 'Currency was not found.', t)}
+        </p>
       </section>
     )
   }
@@ -72,7 +82,7 @@ const CryptoDetailsPage = () => {
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Back to market
+          {t('Back to market')}
         </Link>
 
         <div className="rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm md:p-6">
@@ -100,7 +110,8 @@ const CryptoDetailsPage = () => {
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Market rank #{coin.market_cap_rank ?? '—'}
+                  {t('Market rank #')}
+                  {coin.market_cap_rank ?? '—'}
                 </p>
               </div>
             </div>
@@ -115,7 +126,7 @@ const CryptoDetailsPage = () => {
                       : ''
                 }`}
               >
-                {formatCurrency(currentPrice)}
+                {formatCurrency(locale, currentPrice)}
               </p>
               <p
                 className={`mt-1 inline-flex items-center justify-end gap-1 font-medium ${
@@ -129,7 +140,7 @@ const CryptoDetailsPage = () => {
                 ) : (
                   <ArrowDown className="size-4" />
                 )}
-                {change === null ? '—' : `${change.toFixed(2)}%`} (24h)
+                {change === null ? '—' : `${formatNumber(change, 2, locale)}%`} (24h)
               </p>
             </div>
           </div>
@@ -141,7 +152,7 @@ const CryptoDetailsPage = () => {
                   key={category}
                   className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
                 >
-                  {category}
+                  {t(category)}
                 </span>
               ))}
             </div>
@@ -150,22 +161,37 @@ const CryptoDetailsPage = () => {
 
         <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Metric
-            label="Market cap"
-            value={formatCurrency(coin.market_data.market_cap.usd, true)}
+            label={t('Market cap')}
+            value={formatCurrency(locale, coin.market_data.market_cap.usd, true)}
           />
           <Metric
-            label="24h volume"
-            value={formatCurrency(coin.market_data.total_volume.usd, true)}
+            label={t('24h volume')}
+            value={formatCurrency(locale, coin.market_data.total_volume.usd, true)}
           />
-          <Metric label="24h high" value={formatCurrency(coin.market_data.high_24h.usd)} />
-          <Metric label="24h low" value={formatCurrency(coin.market_data.low_24h.usd)} />
-          <Metric label="All-time high" value={formatCurrency(coin.market_data.ath.usd)} />
-          <Metric label="All-time low" value={formatCurrency(coin.market_data.atl.usd)} />
           <Metric
-            label="Circulating supply"
-            value={formatNumber(coin.market_data.circulating_supply)}
+            label={t('24h high')}
+            value={formatCurrency(locale, coin.market_data.high_24h.usd)}
           />
-          <Metric label="Maximum supply" value={formatNumber(coin.market_data.max_supply)} />
+          <Metric
+            label={t('24h low')}
+            value={formatCurrency(locale, coin.market_data.low_24h.usd)}
+          />
+          <Metric
+            label={t('All-time high')}
+            value={formatCurrency(locale, coin.market_data.ath.usd)}
+          />
+          <Metric
+            label={t('All-time low')}
+            value={formatCurrency(locale, coin.market_data.atl.usd)}
+          />
+          <Metric
+            label={t('Circulating supply')}
+            value={formatSupply(locale, coin.market_data.circulating_supply)}
+          />
+          <Metric
+            label={t('Maximum supply')}
+            value={formatSupply(locale, coin.market_data.max_supply)}
+          />
         </dl>
 
         <div className="rounded-xl border border-border bg-card p-4 text-card-foreground shadow-sm md:p-6">

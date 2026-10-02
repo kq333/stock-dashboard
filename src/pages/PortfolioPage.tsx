@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { formatNumber, getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState, type FormEvent } from 'react'
 import { ArrowDown, ArrowUp, BriefcaseBusiness, Plus, Trash2 } from 'lucide-react'
 import { calculatePosition, calculatePortfolioTotals } from '@/lib/portfolio'
@@ -55,18 +58,18 @@ const getInitialPortfolio = () => {
   }
 }
 
-const formatCurrency = (value: number | null, compact = false) =>
+const formatCurrency = (locale: string, value: number | null, compact = false) =>
   value === null
     ? '\u2014'
-    : new Intl.NumberFormat('en-US', {
+    : new Intl.NumberFormat(locale, {
         currency: 'USD',
         maximumFractionDigits: compact ? 2 : value < 1 ? 6 : 2,
         notation: compact ? 'compact' : 'standard',
         style: 'currency',
       }).format(value)
 
-const formatQuantity = (value: number) =>
-  new Intl.NumberFormat(undefined, { maximumFractionDigits: 8 }).format(value)
+const formatQuantity = (locale: string, value: number) =>
+  new Intl.NumberFormat(locale, { maximumFractionDigits: 8 }).format(value)
 
 type SummaryCardProps = {
   label: string
@@ -82,6 +85,9 @@ const SummaryCard = ({ label, value, valueClassName = '' }: SummaryCardProps) =>
 )
 
 const PortfolioPage = () => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const [holdings, setHoldings] = useState<PortfolioHolding[]>(getInitialPortfolio)
   const [selectedAsset, setSelectedAsset] = useState('')
   const [quantity, setQuantity] = useState('')
@@ -231,26 +237,32 @@ const PortfolioPage = () => {
     <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-7">
         <p className="mb-1 text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-          Personal finance
+          {t('Personal finance')}
         </p>
         <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">
           <BriefcaseBusiness className="size-8" aria-hidden="true" />
-          Portfolio
+          {t('Portfolio')}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Track your holdings and unrealized performance. Data stays in this browser.
+          {t('Track your holdings and unrealized performance. Data stays in this browser.')}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard label="Portfolio value" value={formatCurrency(totals.value, true)} />
-        <SummaryCard label="Total invested" value={formatCurrency(totals.invested, true)} />
         <SummaryCard
-          label="Unrealized profit/loss"
+          label={t('Portfolio value')}
+          value={formatCurrency(locale, totals.value, true)}
+        />
+        <SummaryCard
+          label={t('Total invested')}
+          value={formatCurrency(locale, totals.invested, true)}
+        />
+        <SummaryCard
+          label={t('Unrealized profit/loss')}
           value={
             totalProfitLoss === null
               ? '\u2014'
-              : `${totalProfitLoss >= 0 ? '+' : ''}${formatCurrency(totalProfitLoss, true)}`
+              : `${totalProfitLoss >= 0 ? '+' : ''}${formatCurrency(locale, totalProfitLoss, true)}`
           }
           valueClassName={
             totalProfitLoss === null
@@ -261,11 +273,11 @@ const PortfolioPage = () => {
           }
         />
         <SummaryCard
-          label="Total return"
+          label={t('Total return')}
           value={
             totalReturn === null
               ? '\u2014'
-              : `${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`
+              : `${totalReturn >= 0 ? '+' : ''}${formatNumber(totalReturn, 2, locale)}%`
           }
           valueClassName={
             totalReturn === null
@@ -279,16 +291,14 @@ const PortfolioPage = () => {
 
       {totals.missingPrices > 0 && (
         <p role="status" className="mt-4 text-sm text-muted-foreground">
-          Prices are unavailable for {totals.missingPrices}{' '}
-          {totals.missingPrices === 1 ? 'position' : 'positions'}. Portfolio value, return and
-          allocation will appear when all prices are available.
+          {t('Missing prices', { count: totals.missingPrices })}
         </p>
       )}
       <article className="mt-4 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
         <div className="mb-4">
-          <h2 className="text-xl font-semibold">Add a position</h2>
+          <h2 className="text-xl font-semibold">{t('Add a position')}</h2>
           <p className="text-sm text-muted-foreground">
-            Adding the same asset again recalculates its weighted average cost.
+            {t('Adding the same asset again recalculates its weighted average cost.')}
           </p>
         </div>
 
@@ -297,21 +307,21 @@ const PortfolioPage = () => {
           className="grid items-end gap-3 md:grid-cols-[minmax(0,2fr)_1fr_1fr_auto]"
         >
           <label className="grid gap-1.5 text-sm font-medium">
-            Asset
+            {t('Asset')}
             <select
               value={selectedAsset}
               onChange={(event) => setSelectedAsset(event.target.value)}
               className="h-11 w-full rounded-md border border-input bg-background px-3 font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">Select crypto or stock</option>
-              <optgroup label="Cryptocurrencies">
+              <option value="">{t('Select crypto or stock')}</option>
+              <optgroup label={t('Cryptocurrencies')}>
                 {coinMarkets.map((coin) => (
                   <option key={coin.id} value={`crypto:${coin.id}`}>
                     {coin.name} ({coin.symbol.toUpperCase()})
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Stocks and ETFs">
+              <optgroup label={t('Stocks and ETFs')}>
                 {stockOptions.map((stock) => (
                   <option key={stock.symbol} value={`stock:${stock.symbol}`}>
                     {stock.name} ({stock.symbol})
@@ -322,7 +332,7 @@ const PortfolioPage = () => {
           </label>
 
           <label className="grid gap-1.5 text-sm font-medium">
-            Quantity
+            {t('Quantity')}
             <input
               type="number"
               min="0"
@@ -335,7 +345,7 @@ const PortfolioPage = () => {
           </label>
 
           <label className="grid gap-1.5 text-sm font-medium">
-            Average cost (USD)
+            {t('Average cost (USD)')}
             <input
               type="number"
               min="0"
@@ -353,23 +363,25 @@ const PortfolioPage = () => {
             className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="size-4" aria-hidden="true" />
-            Add
+            {t('Add')}
           </button>
         </form>
 
-        {formError && <p className="mt-3 text-sm text-destructive">{formError}</p>}
+        {formError && (
+          <p className="mt-3 text-sm text-destructive">{translateError(formError, t)}</p>
+        )}
       </article>
 
       <div className="mt-4">
         <div className="mb-3 flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold">Holdings</h2>
+            <h2 className="text-xl font-semibold">{t('Holdings')}</h2>
             <p className="text-sm text-muted-foreground">
-              {holdings.length} {holdings.length === 1 ? 'position' : 'positions'}
+              {t('Position count', { count: holdings.length })}
             </p>
           </div>
           {(areCoinsPending || areStocksPending) && (
-            <span className="text-xs text-muted-foreground">Updating prices...</span>
+            <span className="text-xs text-muted-foreground">{t('Updating prices...')}</span>
           )}
         </div>
 
@@ -408,7 +420,8 @@ const PortfolioPage = () => {
                       <span className="min-w-0">
                         <span className="block truncate font-semibold">{position.name}</span>
                         <span className="text-xs text-muted-foreground">
-                          {position.symbol} · {formatQuantity(position.quantity)} units
+                          {position.symbol} · {formatQuantity(locale, position.quantity)}{' '}
+                          {t('units')}
                         </span>
                       </span>
                     </Link>
@@ -417,7 +430,7 @@ const PortfolioPage = () => {
                       type="button"
                       onClick={() => removeHolding(position)}
                       className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                      aria-label={`Remove ${position.name} from portfolio`}
+                      aria-label={t('Remove position', { name: position.name })}
                     >
                       <Trash2 className="size-4" aria-hidden="true" />
                     </button>
@@ -425,21 +438,25 @@ const PortfolioPage = () => {
 
                   <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Current price</p>
-                      <p className="mt-1 font-semibold">{formatCurrency(position.currentPrice)}</p>
+                      <p className="text-muted-foreground">{t('Current price')}</p>
+                      <p className="mt-1 font-semibold">
+                        {formatCurrency(locale, position.currentPrice)}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-muted-foreground">Market value</p>
-                      <p className="mt-1 font-semibold">{formatCurrency(position.value)}</p>
+                      <p className="text-muted-foreground">{t('Market value')}</p>
+                      <p className="mt-1 font-semibold">{formatCurrency(locale, position.value)}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Average cost</p>
-                      <p className="mt-1 font-semibold">{formatCurrency(position.averageCost)}</p>
+                      <p className="text-muted-foreground">{t('Average cost')}</p>
+                      <p className="mt-1 font-semibold">
+                        {formatCurrency(locale, position.averageCost)}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-muted-foreground">Profit/loss</p>
+                      <p className="text-muted-foreground">{t('Profit/loss')}</p>
                       {position.profitLoss === null ? (
-                        <p className="mt-1 text-muted-foreground">Unavailable</p>
+                        <p className="mt-1 text-muted-foreground">{t('Unavailable')}</p>
                       ) : (
                         <p
                           className={`mt-1 inline-flex items-center justify-end gap-1 font-semibold ${
@@ -454,10 +471,10 @@ const PortfolioPage = () => {
                             <ArrowDown className="size-3.5" aria-hidden="true" />
                           )}
                           {isPositive ? '+' : ''}
-                          {formatCurrency(position.profitLoss)} (
+                          {formatCurrency(locale, position.profitLoss)} (
                           {position.profitLossPercentage === null
                             ? '\u2014'
-                            : position.profitLossPercentage.toFixed(2) + '%'}
+                            : formatNumber(position.profitLossPercentage, 2, locale) + '%'}
                           )
                         </p>
                       )}
@@ -466,8 +483,10 @@ const PortfolioPage = () => {
 
                   <div className="mt-5">
                     <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
-                      <span>Portfolio allocation</span>
-                      <span>{allocation === null ? '\u2014' : `${allocation.toFixed(1)}%`}</span>
+                      <span>{t('Portfolio allocation')}</span>
+                      <span>
+                        {allocation === null ? '\u2014' : `${formatNumber(allocation, 1, locale)}%`}
+                      </span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-muted">
                       <div
@@ -487,9 +506,9 @@ const PortfolioPage = () => {
                 className="mx-auto size-10 text-muted-foreground"
                 aria-hidden="true"
               />
-              <h2 className="mt-4 text-lg font-semibold">Your portfolio is empty</h2>
+              <h2 className="mt-4 text-lg font-semibold">{t('Your portfolio is empty')}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Add your first position to start tracking performance.
+                {t('Add your first position to start tracking performance.')}
               </p>
             </div>
           </div>
@@ -498,7 +517,7 @@ const PortfolioPage = () => {
 
       {errors.length > 0 && (
         <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          Some portfolio prices are temporarily unavailable: {errors[0]}
+          {t('Some portfolio prices are temporarily unavailable:')} {translateError(errors[0], t)}
         </p>
       )}
     </section>
