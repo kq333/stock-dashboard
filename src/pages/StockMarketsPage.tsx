@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { formatNumber, getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Search } from 'lucide-react'
@@ -6,45 +9,50 @@ import { useWatchlist } from '@/hooks/useWatchlist'
 import { SP500_LEADERS, useStockMarketQuery } from '@/services/stockService'
 import WatchlistButton from '@/components/WatchlistButton'
 
-const formatPrice = (value: number | null) =>
+const formatPrice = (locale: string, value: number | null) =>
   value === null
     ? '—'
-    : new Intl.NumberFormat('en-US', {
+    : new Intl.NumberFormat(locale, {
         currency: 'USD',
         maximumFractionDigits: 2,
         style: 'currency',
       }).format(value)
 
-const StockSkeleton = () => (
-  <>
-    {Array.from({ length: 10 }, (_, index) => (
-      <tr key={index} className="border-b border-border">
-        {Array.from({ length: 6 }, (_, cell) => (
-          <td
-            key={cell}
-            className={`py-4 ${
-              cell === 1
-                ? 'hidden px-4 sm:table-cell md:px-6'
-                : cell === 2
-                  ? 'hidden px-4 lg:table-cell lg:px-6'
-                  : cell === 5
-                    ? 'px-1 sm:px-4 md:px-6'
-                    : 'px-2 sm:px-4 md:px-6'
-            }`}
-          >
-            <div
-              className={`h-4 animate-pulse rounded bg-muted ${
-                cell === 1 ? 'w-40' : cell === 4 ? 'ml-auto w-20' : 'w-20'
+const StockSkeleton = () => {
+  return (
+    <>
+      {Array.from({ length: 10 }, (_, index) => (
+        <tr key={index} className="border-b border-border">
+          {Array.from({ length: 6 }, (_, cell) => (
+            <td
+              key={cell}
+              className={`py-4 ${
+                cell === 1
+                  ? 'hidden px-4 sm:table-cell md:px-6'
+                  : cell === 2
+                    ? 'hidden px-4 lg:table-cell lg:px-6'
+                    : cell === 5
+                      ? 'px-1 sm:px-4 md:px-6'
+                      : 'px-2 sm:px-4 md:px-6'
               }`}
-            />
-          </td>
-        ))}
-      </tr>
-    ))}
-  </>
-)
+            >
+              <div
+                className={`h-4 animate-pulse rounded bg-muted ${
+                  cell === 1 ? 'w-40' : cell === 4 ? 'ml-auto w-20' : 'w-20'
+                }`}
+              />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  )
+}
 
 const StockMarketsPage = () => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const [search, setSearch] = useState('')
   const { data: stocks = [], error, isPending } = useStockMarketQuery()
   const { isInWatchlist, toggleAsset } = useWatchlist()
@@ -66,25 +74,27 @@ const StockMarketsPage = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-4 md:p-6">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">S&amp;P 500 leaders</h1>
+              <h1 className="text-2xl font-bold">{t('S&P 500 leaders')}</h1>
               <span
                 className={`size-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-yellow-500'}`}
-                title={isConnected ? 'Finnhub live prices connected' : 'Connecting to Finnhub'}
+                title={
+                  isConnected ? t('Finnhub live prices connected') : t('Connecting to Finnhub')
+                }
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              50 major constituents · Finnhub live US trades
+              {t('50 major constituents · Finnhub live US trades')}
             </p>
           </div>
 
           <label className="relative w-full sm:w-72">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <span className="sr-only">Search S&amp;P 500 stocks</span>
+            <span className="sr-only">{t('Search S&P 500 stocks')}</span>
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search company or symbol..."
+              placeholder={t('Search company or symbol...')}
               className="w-full rounded-md border border-input bg-background py-2 pr-3 pl-9 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </label>
@@ -95,12 +105,16 @@ const StockMarketsPage = () => {
             <thead>
               <tr className="border-b border-border text-left text-sm text-muted-foreground">
                 <th className="px-2 py-3 font-medium sm:px-4 md:px-6">Symbol</th>
-                <th className="hidden px-4 py-3 font-medium sm:table-cell md:px-6">Company</th>
-                <th className="hidden px-4 py-3 font-medium lg:table-cell lg:px-6">Sector</th>
-                <th className="px-2 py-3 text-right font-medium sm:px-4 md:px-6">Price</th>
-                <th className="px-2 py-3 text-right font-medium sm:px-4 md:px-6">Change</th>
+                <th className="hidden px-4 py-3 font-medium sm:table-cell md:px-6">
+                  {t('Company')}
+                </th>
+                <th className="hidden px-4 py-3 font-medium lg:table-cell lg:px-6">
+                  {t('Sector')}
+                </th>
+                <th className="px-2 py-3 text-right font-medium sm:px-4 md:px-6">{t('Price')}</th>
+                <th className="px-2 py-3 text-right font-medium sm:px-4 md:px-6">{t('Change')}</th>
                 <th className="w-11 px-1 py-3 sm:w-16 sm:px-4 md:px-6">
-                  <span className="sr-only">Watchlist</span>
+                  <span className="sr-only">{t('Watchlist')}</span>
                 </th>
               </tr>
             </thead>
@@ -126,7 +140,7 @@ const StockMarketsPage = () => {
                       </td>
                       <td className="hidden px-4 py-4 sm:table-cell md:px-6">{stock.name}</td>
                       <td className="hidden px-4 py-4 text-sm text-muted-foreground lg:table-cell lg:px-6">
-                        {stock.sector}
+                        {t(stock.sector)}
                       </td>
                       <td
                         className={`px-2 py-4 text-right text-sm font-medium whitespace-nowrap tabular-nums transition-colors sm:px-4 sm:text-base md:px-6 ${
@@ -140,7 +154,7 @@ const StockMarketsPage = () => {
                         <span className="inline-flex items-center gap-1">
                           {livePrice?.direction === 'up' && <ArrowUp className="size-3.5" />}
                           {livePrice?.direction === 'down' && <ArrowDown className="size-3.5" />}
-                          {formatPrice(displayedPrice)}
+                          {formatPrice(locale, displayedPrice)}
                         </span>
                       </td>
                       <td
@@ -152,7 +166,7 @@ const StockMarketsPage = () => {
                       >
                         {!stock.quote
                           ? '—'
-                          : `${stock.quote.dp >= 0 ? '+' : ''}${stock.quote.dp.toFixed(2)}%`}
+                          : `${stock.quote.dp >= 0 ? '+' : ''}${formatNumber(stock.quote.dp, 2, locale)}%`}
                       </td>
                       <td className="px-1 py-4 text-right sm:px-4 md:px-6">
                         <WatchlistButton
@@ -176,11 +190,13 @@ const StockMarketsPage = () => {
         </div>
 
         {!isPending && filteredStocks.length === 0 && !error && (
-          <p className="p-8 text-center text-muted-foreground">No stocks match “{search}”.</p>
+          <p className="p-8 text-center text-muted-foreground">
+            {t('No matching stocks', { search })}
+          </p>
         )}
         {(error || quoteError || liveError) && (
           <p className="p-6 text-sm text-destructive">
-            {error?.message ?? quoteError ?? liveError}
+            {translateError(error?.message ?? quoteError ?? liveError, t)}
           </p>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import { useHideOnScroll } from '@/hooks/useHideOnScroll'
 
@@ -7,6 +8,8 @@ const marketSections = [
 ]
 
 const TopbarMarkets = () => {
+  const { t } = useTranslation()
+
   const isHiddenOnScroll = useHideOnScroll()
 
   return (
@@ -15,7 +18,7 @@ const TopbarMarkets = () => {
         isHiddenOnScroll ? 'max-lg:-translate-y-full' : 'translate-y-0'
       }`}
     >
-      <nav aria-label="Market sections">
+      <nav aria-label={t('Market sections')}>
         <ul className="flex items-center justify-center gap-2 text-muted-foreground uppercase md:gap-8">
           {marketSections.map(({ end, label, to }) => (
             <li key={to}>
@@ -30,7 +33,7 @@ const TopbarMarkets = () => {
                   }`
                 }
               >
-                {label}
+                {t(label)}
               </NavLink>
             </li>
           ))}

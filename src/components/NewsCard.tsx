@@ -1,3 +1,5 @@
+import { getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import dateFunction from '../utils/dateFuncion'
 
 interface Props {
@@ -23,6 +25,9 @@ const NewsCard: React.FC<Props> = ({
   url,
   isPriority = false,
 }) => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   return (
     <div className="mx-auto mb-4 flex h-full w-full min-w-0 max-w-md  flex-col overflow-hidden rounded-md border bg-card transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md">
       <img
@@ -37,7 +42,7 @@ const NewsCard: React.FC<Props> = ({
         <div className="flex gap-2 items-center mt-2 mb-4 text-sm text-gray-600">
           <p className=" text-md font-semibold text-gray-600 uppercase"> {source}</p>
           <p className="w-1 h-1 bg-gray-600 rounded-full"></p>
-          <p> {dateFunction(datetime)}</p>
+          <p> {dateFunction(datetime, locale)}</p>
         </div>
 
         <h3 className="text-2xl font-bold mb-2 text-foreground ">{headline}</h3>
@@ -46,7 +51,7 @@ const NewsCard: React.FC<Props> = ({
         <div className="mt-auto flex w-full items-center justify-between border-t border-border pt-4 text-sm text-muted-foreground">
           <p className="text-muted-foreground text-xs font-semibold bg-accent pt-1 pb-1 pr-2 pl-2 uppercase">
             {' '}
-            {category}
+            {t(category)}
           </p>
           <a
             className="text-primary hover:underline "
@@ -54,7 +59,7 @@ const NewsCard: React.FC<Props> = ({
             target="_blank"
             rel="noopener noreferrer"
           >
-            Read more...
+            {t('Read more...')}
           </a>
         </div>
       </div>

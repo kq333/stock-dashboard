@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { formatNumber, getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Search } from 'lucide-react'
@@ -7,20 +10,20 @@ import { useWatchlist } from '@/hooks/useWatchlist'
 import { useCoinMarketsQuery } from '@/services/coinGeckoService'
 import WatchlistButton from '@/components/WatchlistButton'
 
-const formatPrice = (price: number | null) => {
+const formatPrice = (locale: string, price: number | null) => {
   if (price === null) return '—'
 
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(locale, {
     currency: 'USD',
     maximumFractionDigits: price < 1 ? 8 : 2,
     style: 'currency',
   }).format(price)
 }
 
-const formatCompactCurrency = (value: number | null) => {
+const formatCompactCurrency = (locale: string, value: number | null) => {
   if (value === null) return '—'
 
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(locale, {
     currency: 'USD',
     maximumFractionDigits: 2,
     notation: 'compact',
@@ -65,6 +68,9 @@ const CryptoTableSkeleton = () => (
 )
 
 const MarketsPage = () => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const [search, setSearch] = useState('')
   const { cryptos, error: binanceListError } = useBinanceCryptoList()
   const { error: livePriceError, prices, status } = useBinanceLivePrices()
@@ -96,7 +102,7 @@ const MarketsPage = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-4 md:p-6">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">Cryptocurrency market</h1>
+              <h1 className="text-2xl font-bold">{t('Cryptocurrency market')}</h1>
               <span
                 className={`size-2 rounded-full ${
                   status === 'connected'
@@ -105,22 +111,22 @@ const MarketsPage = () => {
                       ? 'bg-yellow-500'
                       : 'bg-red-500'
                 }`}
-                title={`Live prices: ${status}`}
+                title={t('Live prices status', { status: t(status) })}
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              CoinGecko market data with live Binance prices
+              {t('CoinGecko market data with live Binance prices')}
             </p>
           </div>
 
           <label className="relative w-full sm:w-72">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <span className="sr-only">Search cryptocurrencies</span>
+            <span className="sr-only">{t('Search cryptocurrencies')}</span>
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search name or symbol..."
+              placeholder={t('Search name or symbol...')}
               className="w-full rounded-md border border-input bg-background py-2 pr-3 pl-9 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </label>
@@ -131,17 +137,19 @@ const MarketsPage = () => {
             <thead>
               <tr className="border-b border-border text-left text-sm text-muted-foreground">
                 <th className="hidden w-16 px-4 py-3 font-medium sm:table-cell md:px-6">#</th>
-                <th className="px-2 py-3 font-medium sm:px-4 md:px-6">Currency</th>
-                <th className="px-2 py-3 text-right font-medium sm:px-4 md:px-6">Live price</th>
+                <th className="px-2 py-3 font-medium sm:px-4 md:px-6">{t('Currency')}</th>
+                <th className="px-2 py-3 text-right font-medium sm:px-4 md:px-6">
+                  {t('Live price')}
+                </th>
                 <th className="px-2 py-3 text-right font-medium sm:px-4 md:px-6">24h</th>
                 <th className="hidden px-4 py-3 text-right font-medium lg:table-cell lg:px-6">
-                  Market cap
+                  {t('Market cap')}
                 </th>
                 <th className="hidden px-4 py-3 text-right font-medium lg:table-cell lg:px-6">
-                  Volume
+                  {t('Volume')}
                 </th>
                 <th className="w-11 px-1 py-3 sm:w-16 sm:px-4 md:px-6">
-                  <span className="sr-only">Watchlist</span>
+                  <span className="sr-only">{t('Watchlist')}</span>
                 </th>
               </tr>
             </thead>
@@ -194,7 +202,7 @@ const MarketsPage = () => {
                         <span className="inline-flex items-center justify-end gap-1">
                           {livePrice?.direction === 'up' && <ArrowUp className="size-3.5" />}
                           {livePrice?.direction === 'down' && <ArrowDown className="size-3.5" />}
-                          {formatPrice(displayedPrice)}
+                          {formatPrice(locale, displayedPrice)}
                         </span>
                       </td>
                       <td
@@ -206,13 +214,13 @@ const MarketsPage = () => {
                       >
                         {coin.price_change_percentage_24h === null
                           ? '—'
-                          : `${coin.price_change_percentage_24h.toFixed(2)}%`}
+                          : `${formatNumber(coin.price_change_percentage_24h, 2, locale)}%`}
                       </td>
                       <td className="hidden px-4 py-4 text-right tabular-nums lg:table-cell lg:px-6">
-                        {formatCompactCurrency(coin.market_cap)}
+                        {formatCompactCurrency(locale, coin.market_cap)}
                       </td>
                       <td className="hidden px-4 py-4 text-right tabular-nums lg:table-cell lg:px-6">
-                        {formatCompactCurrency(coin.total_volume)}
+                        {formatCompactCurrency(locale, coin.total_volume)}
                       </td>
                       <td className="px-1 py-4 text-right sm:px-4 md:px-6">
                         <WatchlistButton
@@ -237,11 +245,11 @@ const MarketsPage = () => {
 
         {!isPending && markets.length === 0 && !error && (
           <p className="p-8 text-center text-muted-foreground">
-            No cryptocurrencies match “{search}”.
+            {t('No matching crypto', { search })}
           </p>
         )}
 
-        {error && <p className="p-6 text-sm text-destructive">{error}</p>}
+        {error && <p className="p-6 text-sm text-destructive">{translateError(error, t)}</p>}
       </div>
     </section>
   )

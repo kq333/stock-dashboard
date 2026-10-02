@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { formatNumber, getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import { ArrowDown, ArrowUp, GitCompareArrows, Plus, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -56,10 +59,10 @@ const getInitialComparison = () => {
   }
 }
 
-const formatCurrency = (value?: number | null, compact = false) => {
+const formatCurrency = (locale: string, value?: number | null, compact = false) => {
   if (value === undefined || value === null) return '—'
 
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(locale, {
     currency: 'USD',
     maximumFractionDigits: compact ? 2 : value < 1 ? 6 : 2,
     notation: compact ? 'compact' : 'standard',
@@ -68,6 +71,9 @@ const formatCurrency = (value?: number | null, compact = false) => {
 }
 
 const ComparePage = () => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const [comparison, setComparison] = useState<ComparisonAsset[]>(getInitialComparison)
   const [selectedAsset, setSelectedAsset] = useState('')
   const [formError, setFormError] = useState('')
@@ -190,22 +196,22 @@ const ComparePage = () => {
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-            Market analysis
+            {t('Market analysis')}
           </p>
           <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">
             <GitCompareArrows className="size-8" aria-hidden="true" />
-            Compare
+            {t('Compare')}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Compare the live performance of up to four cryptocurrencies or stocks.
+            {t('Compare the live performance of up to four cryptocurrencies or stocks.')}
           </p>
         </div>
 
         {bestPerformer && (
           <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm">
-            <p className="text-xs text-muted-foreground">Best performer today</p>
+            <p className="text-xs text-muted-foreground">{t('Best performer today')}</p>
             <p className="mt-0.5 font-semibold text-green-600 dark:text-green-400">
-              {bestPerformer.name} +{bestPerformer.change.toFixed(2)}%
+              {bestPerformer.name} +{formatNumber(bestPerformer.change, 2, locale)}%
             </p>
           </div>
         )}
@@ -214,7 +220,7 @@ const ComparePage = () => {
       <article className="mb-4 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="grid min-w-0 flex-1 gap-1.5 text-sm font-medium">
-            Add asset
+            {t('Add asset')}
             <select
               value={selectedAsset}
               onChange={(event) => setSelectedAsset(event.target.value)}
@@ -223,10 +229,10 @@ const ComparePage = () => {
             >
               <option value="">
                 {comparison.length >= MAX_COMPARISON_ASSETS
-                  ? 'Maximum four assets selected'
-                  : 'Select crypto or stock'}
+                  ? t('Maximum four assets selected')
+                  : t('Select crypto or stock')}
               </option>
-              <optgroup label="Cryptocurrencies">
+              <optgroup label={t('Cryptocurrencies')}>
                 {coinMarkets
                   .filter((coin) => !selectedKeys.has(`crypto:${coin.id}`))
                   .map((coin) => (
@@ -235,7 +241,7 @@ const ComparePage = () => {
                     </option>
                   ))}
               </optgroup>
-              <optgroup label="Stocks and ETFs">
+              <optgroup label={t('Stocks and ETFs')}>
                 {stockOptions
                   .filter((stock) => !selectedKeys.has(`stock:${stock.symbol}`))
                   .map((stock) => (
@@ -254,15 +260,15 @@ const ComparePage = () => {
             className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="size-4" aria-hidden="true" />
-            Add to comparison
+            {t('Add to comparison')}
           </button>
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            {comparison.length} of {MAX_COMPARISON_ASSETS} assets selected
+            {t('Selection count', { count: comparison.length, max: MAX_COMPARISON_ASSETS })}
           </p>
-          {formError && <p className="text-sm text-destructive">{formError}</p>}
+          {formError && <p className="text-sm text-destructive">{translateError(formError, t)}</p>}
         </div>
       </article>
 
@@ -285,7 +291,7 @@ const ComparePage = () => {
                   type="button"
                   onClick={() => removeAsset(asset)}
                   className="absolute top-3 right-3 inline-flex size-8 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                  aria-label={`Remove ${asset.name} from comparison`}
+                  aria-label={t('Remove comparison asset', { name: asset.name })}
                 >
                   <X className="size-4" aria-hidden="true" />
                 </button>
@@ -304,13 +310,13 @@ const ComparePage = () => {
                   <span className="min-w-0">
                     <span className="block truncate font-semibold">{asset.name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {asset.symbol} · {asset.type}
+                      {asset.symbol} · {t(asset.type)}
                     </span>
                   </span>
                 </Link>
 
                 <div className="mt-5">
-                  <p className="text-2xl font-bold">{formatCurrency(asset.currentPrice)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(locale, asset.currentPrice)}</p>
                   <p
                     className={`mt-1 inline-flex items-center gap-1 text-sm font-semibold ${
                       isPositive
@@ -325,44 +331,48 @@ const ComparePage = () => {
                     )}
                     {asset.change === null
                       ? '—'
-                      : `${isPositive ? '+' : ''}${asset.change.toFixed(2)}%`}
+                      : `${isPositive ? '+' : ''}${formatNumber(asset.change, 2, locale)}%`}
                   </p>
                 </div>
 
                 <dl className="mt-5 space-y-3 border-t border-border pt-4 text-sm">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">24h high</dt>
-                    <dd className="font-medium">{formatCurrency(asset.high)}</dd>
+                    <dt className="text-muted-foreground">{t('24h high')}</dt>
+                    <dd className="font-medium">{formatCurrency(locale, asset.high)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">24h low</dt>
-                    <dd className="font-medium">{formatCurrency(asset.low)}</dd>
+                    <dt className="text-muted-foreground">{t('24h low')}</dt>
+                    <dd className="font-medium">{formatCurrency(locale, asset.low)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Market cap</dt>
+                    <dt className="text-muted-foreground">{t('Market cap')}</dt>
                     <dd className="font-medium">
-                      {asset.marketCap !== null ? formatCurrency(asset.marketCap, true) : '—'}
+                      {asset.marketCap !== null
+                        ? formatCurrency(locale, asset.marketCap, true)
+                        : '—'}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-muted-foreground">
-                      {asset.type === 'crypto' ? '24h volume' : 'Sector'}
+                      {asset.type === 'crypto' ? t('24h volume') : t('Sector')}
                     </dt>
                     <dd className="max-w-36 truncate text-right font-medium">
                       {asset.type === 'crypto'
                         ? asset.volume !== null
-                          ? formatCurrency(asset.volume, true)
+                          ? formatCurrency(locale, asset.volume, true)
                           : '—'
-                        : (asset.sector ?? '—')}
+                        : t(asset.sector ?? '—')}
                     </dd>
                   </div>
                 </dl>
 
                 <div className="mt-5">
                   <div className="mb-1.5 flex justify-between text-xs text-muted-foreground">
-                    <span>24h price range</span>
+                    <span>{t('24h price range')}</span>
                     <span>
-                      {asset.rangePosition === null ? '—' : `${asset.rangePosition.toFixed(0)}%`}
+                      {asset.rangePosition === null
+                        ? '—'
+                        : `${formatNumber(asset.rangePosition, 0, locale)}%`}
                     </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -383,21 +393,23 @@ const ComparePage = () => {
               className="mx-auto size-10 text-muted-foreground"
               aria-hidden="true"
             />
-            <h2 className="mt-4 text-lg font-semibold">No assets selected</h2>
+            <h2 className="mt-4 text-lg font-semibold">{t('No assets selected')}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Add at least two assets to start comparing their performance.
+              {t('Add at least two assets to start comparing their performance.')}
             </p>
           </div>
         </div>
       )}
 
       {(areCoinsPending || areStocksPending) && comparison.length > 0 && (
-        <p className="mt-4 text-center text-xs text-muted-foreground">Updating market data...</p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          {t('Updating market data...')}
+        </p>
       )}
 
       {errors.length > 0 && (
         <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          Some comparison data is temporarily unavailable: {errors[0]}
+          {t('Some comparison data is temporarily unavailable:')} {translateError(errors[0], t)}
         </p>
       )}
     </section>

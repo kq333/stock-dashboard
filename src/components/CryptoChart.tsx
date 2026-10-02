@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { useEffect, useRef } from 'react'
 import {
   CandlestickSeries,
@@ -29,6 +32,9 @@ const CryptoChart = ({
   symbol,
   title = 'Live candlestick chart',
 }: CryptoChartProps) => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
@@ -105,6 +111,19 @@ const CryptoChart = ({
   }, [height])
 
   useEffect(() => {
+    chartRef.current?.applyOptions({
+      localization: {
+        locale,
+        priceFormatter: (price: number) =>
+          new Intl.NumberFormat(locale, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 8,
+          }).format(price),
+      },
+    })
+  }, [height, locale])
+
+  useEffect(() => {
     if (!seriesRef.current || candles.length === 0) return
 
     seriesRef.current.setData(candles)
@@ -118,7 +137,7 @@ const CryptoChart = ({
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold">{title}</h2>
+        <h2 className="text-xl font-semibold">{t(title)}</h2>
         <span className="flex items-center gap-2 text-sm text-muted-foreground">
           <span
             className={`size-2 rounded-full ${
@@ -129,7 +148,7 @@ const CryptoChart = ({
                   : 'bg-red-500'
             }`}
           />
-          {status}
+          {t(status)}
         </span>
       </div>
 
@@ -137,15 +156,15 @@ const CryptoChart = ({
         <div ref={containerRef} className="w-full overflow-hidden rounded-md" />
         {candles.length === 0 && !error && (
           <div className="absolute inset-0 grid place-items-center text-muted-foreground">
-            Loading Binance chart...
+            {t('Loading Binance chart...')}
           </div>
         )}
       </div>
 
-      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+      {error && <p className="mt-3 text-sm text-destructive">{translateError(error, t)}</p>}
 
       <p className="mt-3 text-right text-xs text-muted-foreground">
-        Charts by{' '}
+        {t('Charts by')}{' '}
         <a
           className="underline underline-offset-2 hover:text-foreground"
           href="https://www.tradingview.com/"

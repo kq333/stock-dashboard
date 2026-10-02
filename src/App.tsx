@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { lazy, Suspense, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
@@ -36,6 +37,8 @@ const DefaultRouteRedirect = () => {
 }
 
 function App() {
+  const { t } = useTranslation()
+
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   return (
@@ -57,7 +60,7 @@ function App() {
           <Suspense
             fallback={
               <p role="status" className="p-8 text-center text-muted-foreground">
-                Loading page...
+                {t('Loading page...')}
               </p>
             }
           >

@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { formatNumber, getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { useMemo, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Landmark } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -18,10 +21,10 @@ const toDateKey = (date: Date) =>
     date.getDate(),
   ).padStart(2, '0')}`
 
-const formatCompactCurrency = (value: number | null) => {
+const formatCompactCurrency = (locale: string, value: number | null) => {
   if (value === null) return '—'
 
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(locale, {
     currency: 'USD',
     maximumFractionDigits: 2,
     notation: 'compact',
@@ -37,6 +40,9 @@ const getHourLabel = (hour: EarningsEvent['hour']) => {
 }
 
 const CalendarPage = () => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const today = new Date()
   const [visibleMonth, setVisibleMonth] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1),
@@ -125,14 +131,14 @@ const CalendarPage = () => {
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-sm font-semibold tracking-wider text-muted-foreground uppercase">
-            Upcoming events
+            {t('Upcoming events')}
           </p>
           <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">
             <CalendarDays className="size-8" aria-hidden="true" />
-            Market calendar
+            {t('Market calendar')}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            US earnings announcements and upcoming IPOs from Finnhub.
+            {t('US earnings announcements and upcoming IPOs from Finnhub.')}
           </p>
         </div>
 
@@ -148,7 +154,7 @@ const CalendarPage = () => {
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
-              {value === 'ipos' ? 'IPOs' : value}
+              {t(value === 'ipos' ? 'IPOs' : value === 'earnings' ? 'Earnings' : 'All')}
             </button>
           ))}
         </div>
@@ -156,10 +162,10 @@ const CalendarPage = () => {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          ['Earnings events', earnings.length],
-          ['IPO events', ipos.length],
-          ['Before market open', beforeOpenCount],
-          ['After market close', afterCloseCount],
+          [t('Earnings events'), earnings.length],
+          [t('IPO events'), ipos.length],
+          [t('Before market open'), beforeOpenCount],
+          [t('After market close'), afterCloseCount],
         ].map(([label, value]) => (
           <article
             key={label}
@@ -181,12 +187,12 @@ const CalendarPage = () => {
             type="button"
             onClick={() => changeMonth(-1)}
             className="inline-flex size-9 cursor-pointer items-center justify-center rounded-md border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            aria-label="Previous month"
+            aria-label={t('Previous month')}
           >
             <ChevronLeft className="size-4" aria-hidden="true" />
           </button>
           <h2 className="text-lg font-semibold">
-            {visibleMonth.toLocaleDateString('en-US', {
+            {visibleMonth.toLocaleDateString(locale, {
               month: 'long',
               year: 'numeric',
             })}
@@ -195,7 +201,7 @@ const CalendarPage = () => {
             type="button"
             onClick={() => changeMonth(1)}
             className="inline-flex size-9 cursor-pointer items-center justify-center rounded-md border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            aria-label="Next month"
+            aria-label={t('Next month')}
           >
             <ChevronRight className="size-4" aria-hidden="true" />
           </button>
@@ -212,7 +218,7 @@ const CalendarPage = () => {
             <div className="hidden grid-cols-7 border-b border-border text-center text-xs font-medium text-muted-foreground md:grid">
               {WEEK_DAYS.map((day) => (
                 <div key={day} className="border-r border-border py-3 last:border-r-0">
-                  {day}
+                  {t(day)}
                 </div>
               ))}
             </div>
@@ -244,12 +250,12 @@ const CalendarPage = () => {
                     <span className="mt-2 block space-y-1">
                       {events.earnings.length > 0 && (
                         <span className="block truncate rounded bg-blue-500/10 px-1.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
-                          {events.earnings.length} earnings
+                          {t('Earnings count', { count: events.earnings.length })}
                         </span>
                       )}
                       {events.ipos.length > 0 && (
                         <span className="block truncate rounded bg-violet-500/10 px-1.5 py-1 text-xs font-medium text-violet-700 dark:text-violet-300">
-                          {events.ipos.length} {events.ipos.length === 1 ? 'IPO' : 'IPOs'}
+                          {events.ipos.length} {events.ipos.length === 1 ? 'IPO' : t('IPOs')}
                         </span>
                       )}
                     </span>
@@ -274,14 +280,17 @@ const CalendarPage = () => {
                     >
                       <span>
                         <span className="block font-semibold">
-                          {date.toLocaleDateString('en-US', {
+                          {date.toLocaleDateString(locale, {
                             day: 'numeric',
                             month: 'short',
                             weekday: 'short',
                           })}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {events.earnings.length} earnings · {events.ipos.length} IPOs
+                          {t('Event counts', {
+                            earnings: events.earnings.length,
+                            ipos: events.ipos.length,
+                          })}
                         </span>
                       </span>
                       <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
@@ -290,7 +299,7 @@ const CalendarPage = () => {
                 })
               ) : (
                 <p className="p-8 text-center text-sm text-muted-foreground">
-                  No events found for this month and filter.
+                  {t('No events found for this month and filter.')}
                 </p>
               )}
             </div>
@@ -300,9 +309,9 @@ const CalendarPage = () => {
 
       <article className="mt-4 rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
         <div className="mb-4">
-          <p className="text-sm font-medium text-muted-foreground">Selected date</p>
+          <p className="text-sm font-medium text-muted-foreground">{t('Selected date')}</p>
           <h2 className="text-xl font-semibold">
-            {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-US', {
+            {new Date(`${selectedDate}T00:00:00`).toLocaleDateString(locale, {
               day: 'numeric',
               month: 'long',
               weekday: 'long',
@@ -328,7 +337,7 @@ const CalendarPage = () => {
                     </Link>
                     <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock3 className="size-3" aria-hidden="true" />
-                      {getHourLabel(event.hour)}
+                      {t(getHourLabel(event.hour))}
                     </p>
                   </div>
                   <span className="rounded bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
@@ -337,14 +346,18 @@ const CalendarPage = () => {
                 </div>
                 <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <dt className="text-muted-foreground">EPS estimate</dt>
+                    <dt className="text-muted-foreground">{t('EPS estimate')}</dt>
                     <dd className="font-medium">
-                      {event.epsEstimate === null ? '—' : event.epsEstimate.toFixed(2)}
+                      {event.epsEstimate === null
+                        ? '—'
+                        : formatNumber(event.epsEstimate, 2, locale)}
                     </dd>
                   </div>
                   <div className="text-right">
-                    <dt className="text-muted-foreground">Revenue estimate</dt>
-                    <dd className="font-medium">{formatCompactCurrency(event.revenueEstimate)}</dd>
+                    <dt className="text-muted-foreground">{t('Revenue estimate')}</dt>
+                    <dd className="font-medium">
+                      {formatCompactCurrency(locale, event.revenueEstimate)}
+                    </dd>
                   </div>
                 </dl>
               </div>
@@ -360,22 +373,24 @@ const CalendarPage = () => {
                     <p className="font-semibold">{event.name}</p>
                     <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <Landmark className="size-3" aria-hidden="true" />
-                      {event.exchange || 'Exchange not announced'}
+                      {event.exchange || t('Exchange not announced')}
                       {event.symbol && ` · ${event.symbol}`}
                     </p>
                   </div>
                   <span className="rounded bg-violet-500/10 px-2 py-1 text-xs font-medium text-violet-700 capitalize dark:text-violet-300">
-                    {event.status}
+                    {t(event.status)}
                   </span>
                 </div>
                 <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <dt className="text-muted-foreground">Expected price</dt>
+                    <dt className="text-muted-foreground">{t('Expected price')}</dt>
                     <dd className="font-medium">{event.price || '—'}</dd>
                   </div>
                   <div className="text-right">
-                    <dt className="text-muted-foreground">Offer value</dt>
-                    <dd className="font-medium">{formatCompactCurrency(event.totalSharesValue)}</dd>
+                    <dt className="text-muted-foreground">{t('Offer value')}</dt>
+                    <dd className="font-medium">
+                      {formatCompactCurrency(locale, event.totalSharesValue)}
+                    </dd>
                   </div>
                 </dl>
               </div>
@@ -383,20 +398,20 @@ const CalendarPage = () => {
           </div>
         ) : (
           <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            No events for this date and filter.
+            {t('No events for this date and filter.')}
           </p>
         )}
 
         {selectedEvents.earnings.length > 50 && (
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            Showing the first 50 of {selectedEvents.earnings.length} earnings events.
+            {t('Showing earnings', { count: selectedEvents.earnings.length })}
           </p>
         )}
       </article>
 
       {error && (
         <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          Calendar data is temporarily unavailable: {error.message}
+          {t('Calendar data is temporarily unavailable:')} {translateError(error.message, t)}
         </p>
       )}
     </section>

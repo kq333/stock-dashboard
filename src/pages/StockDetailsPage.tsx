@@ -1,3 +1,6 @@
+import { translateError } from '@/lib/translationErrors'
+import { formatNumber, getLocale } from '@/lib/formatters'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import WatchlistButton from '@/components/WatchlistButton'
@@ -5,24 +8,27 @@ import { useFinnhubStockPrices } from '@/hooks/useFinnhubStockPrices'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useStockDetailsQuery } from '@/services/stockService'
 
-const formatCurrency = (value?: number | null) =>
+const formatCurrency = (locale: string, value?: number | null) =>
   value === undefined || value === null
     ? '—'
-    : new Intl.NumberFormat(undefined, {
+    : new Intl.NumberFormat(locale, {
         currency: 'USD',
         maximumFractionDigits: 2,
         style: 'currency',
       }).format(value)
 
-const formatCompact = (value?: number | null) =>
+const formatCompact = (locale: string, value?: number | null) =>
   value === undefined || value === null
     ? '—'
-    : new Intl.NumberFormat(undefined, {
+    : new Intl.NumberFormat(locale, {
         maximumFractionDigits: 2,
         notation: 'compact',
       }).format(value)
 
 const StockDetailsPage = () => {
+  const { t, i18n } = useTranslation()
+  const locale = getLocale(i18n.resolvedLanguage)
+
   const { symbol = '' } = useParams()
   const normalizedSymbol = symbol.toUpperCase()
   const { data, error, isPending } = useStockDetailsQuery(normalizedSymbol)
@@ -40,13 +46,15 @@ const StockDetailsPage = () => {
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Back to S&amp;P 500 leaders
+          {t('Back to S&P 500 leaders')}
         </Link>
 
         {isPending ? (
           <div className="h-72 animate-pulse rounded-xl bg-muted" />
         ) : error || !quote || !profile ? (
-          <p className="text-destructive">{error?.message ?? 'Stock details are unavailable.'}</p>
+          <p className="text-destructive">
+            {translateError(error?.message ?? 'Stock details are unavailable.', t)}
+          </p>
         ) : (
           <>
             <div className="rounded-xl border border-border bg-card p-4 shadow-sm md:p-6">
@@ -84,7 +92,9 @@ const StockDetailsPage = () => {
                 </div>
 
                 <div className="text-right">
-                  <p className="text-3xl font-bold">{formatCurrency(livePrice ?? quote.c)}</p>
+                  <p className="text-3xl font-bold">
+                    {formatCurrency(locale, livePrice ?? quote.c)}
+                  </p>
                   <p
                     className={`font-medium ${
                       quote.dp >= 0
@@ -93,7 +103,7 @@ const StockDetailsPage = () => {
                     }`}
                   >
                     {quote.dp >= 0 ? '+' : ''}
-                    {quote.dp.toFixed(2)}%
+                    {formatNumber(quote.dp, 2, locale)}%
                   </p>
                 </div>
               </div>
@@ -101,17 +111,25 @@ const StockDetailsPage = () => {
 
             <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                ['Previous close', formatCurrency(quote.pc)],
-                ['Open', formatCurrency(quote.o)],
-                ['Day high', formatCurrency(quote.h)],
-                ['Day low', formatCurrency(quote.l)],
-                ['Price change', formatCurrency(quote.d)],
+                [t('Previous close'), formatCurrency(locale, quote.pc)],
+                [t('Opening price'), formatCurrency(locale, quote.o)],
+                [t('Day high'), formatCurrency(locale, quote.h)],
+                [t('Day low'), formatCurrency(locale, quote.l)],
+                [t('Price change'), formatCurrency(locale, quote.d)],
                 [
-                  'Market capitalization',
-                  `$${formatCompact(profile.marketCapitalization * 1_000_000)}`,
+                  t('Market capitalization'),
+                  `$${formatCompact(locale, profile.marketCapitalization * 1_000_000)}`,
                 ],
-                ['Shares outstanding', formatCompact(profile.shareOutstanding * 1_000_000)],
-                ['IPO date', profile.ipo || '—'],
+                [
+                  t('Shares outstanding'),
+                  formatCompact(locale, profile.shareOutstanding * 1_000_000),
+                ],
+                [
+                  t('IPO date'),
+                  profile.ipo
+                    ? new Date(`${profile.ipo}T00:00:00`).toLocaleDateString(locale)
+                    : '—',
+                ],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-border bg-card p-4">
                   <dt className="text-sm text-muted-foreground">{label}</dt>
@@ -127,14 +145,15 @@ const StockDetailsPage = () => {
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 font-medium hover:underline"
               >
-                Visit {profile.name}
+                {t('Visit')} {profile.name}
                 <ExternalLink className="size-4" />
               </a>
             )}
 
             <p className="text-sm text-muted-foreground">
-              Historical stock charts are not included because Finnhub restricts that endpoint on
-              the free plan.
+              {t(
+                'Historical stock charts are not included because Finnhub restricts that endpoint on the free plan.',
+              )}
             </p>
           </>
         )}

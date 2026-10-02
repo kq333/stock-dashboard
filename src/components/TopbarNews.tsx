@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { NewsCategory } from '@/services/newsService'
 import { useHideOnScroll } from '@/hooks/useHideOnScroll'
 
@@ -13,6 +14,8 @@ const topbarElements: { label: string; value: NewsCategory }[] = [
 ]
 
 const TopbarNews: React.FC<Props> = ({ newsCategory, setNewsCategory }) => {
+  const { t } = useTranslation()
+
   const isHiddenOnScroll = useHideOnScroll()
 
   return (
@@ -33,7 +36,7 @@ const TopbarNews: React.FC<Props> = ({ newsCategory, setNewsCategory }) => {
                   : 'hover:bg-accent hover:text-accent-foreground'
               }`}
             >
-              {label}
+              {t(label)}
             </button>
           </li>
         ))}
